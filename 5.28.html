@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FilmLink — Creator Application & Admin Dashboard</title>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: #faf9f7; min-height: 100vh; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState } = React;
+
+/* ─── Constants ─────────────────────────────────────────────────────── */
+const PROFESSIONS = [
+  { icon: "🎭", label: "Actor" },
+  { icon: "🎬", label: "Director" },
+  { icon: "✍️", label: "Writer" },
+  { icon: "🎥", label: "Cinematographer" },
+  { icon: "🎞️", label: "Editor" },
+  { icon: "🎵", label: "Composer" },
+  { icon: "🎙️", label: "Producer" },
+  { icon: "💄", label: "Makeup / Hair" },
+  { icon: "🎨", label: "Prod. Designer" },
+];
+
+const SEED_APPS = [
+  {
+    id: 1, name: "Maya Osei", initials: "MO",
+    color: "#D4E8FF", textColor: "#1A4A7A",
+    profession: "Actor", location: "Los Angeles, CA",
+    bio: "Theater-trained actor with 3 years of stage experience and several indie film credits. Recent grad of the Stella Adler program.",
+    credits: "The Last Station (short, 2023)\nEcho (short, 2022)\nHarbor Lines (web series, 2021)",
+    reelFile: "reel_maya_osei.mp4", resumeFile: "resume_maya_osei.pdf", headshotFile: "headshot_maya.jpg",
+    status: "pending", appliedAt: "2 hours ago"
+  },
+  {
+    id: 2, name: "James Portillo", initials: "JP",
+    color: "#E8D4FF", textColor: "#4A1A7A",
+    profession: "Director", location: "New York, NY",
+    bio: "Documentary-style narrative filmmaker. Two Vimeo Staff Picks. Interested in stories about identity, displacement, and urban life.",
+    credits: "Between Lines (documentary, 2023)\nStatic (short, 2022)\nGround Level (2021)",
+    reelFile: "reel_james_portillo.mp4", resumeFile: "resume_james.pdf", headshotFile: "headshot_james.jpg",
+    status: "pending", appliedAt: "5 hours ago"
+  },
+  {
+    id: 3, name: "Priya Nair", initials: "PN",
+    color: "#FFD4E8", textColor: "#7A1A4A",
+    profession: "Cinematographer", location: "Chicago, IL",
+    bio: "DP specializing in natural-light, character-driven visuals. BFA from Columbia College Chicago. Available for shorts, features, and music videos.",
+    credits: "Hollow Ground (2023)\nThree Days (short, 2022)\nNight Market (music video, 2022)",
+    reelFile: "reel_priya_nair.mp4", resumeFile: "resume_priya.pdf", headshotFile: "headshot_priya.jpg",
+    status: "pending", appliedAt: "1 day ago"
+  },
+  {
+    id: 4, name: "Darius Kwame", initials: "DK",
+    color: "#D4FFE8", textColor: "#1A7A4A",
+    profession: "Writer", location: "Atlanta, GA",
+    bio: "Screenwriter with a focus on Afro-futurism and genre-bending narratives. Currently developing a feature. Previous shorts have screened at SXSW and Tribeca.",
+    credits: "Parallel (feature script, 2023)\nGlass Cities (short, 2022)",
+    reelFile: "writing_sample_darius.pdf", resumeFile: "resume_darius.pdf", headshotFile: "headshot_darius.jpg",
+    status: "approved", appliedAt: "3 days ago"
+  },
+  {
+    id: 5, name: "Sofia Reyes", initials: "SR",
+    color: "#FFE8D4", textColor: "#7A4A1A",
+    profession: "Editor", location: "Austin, TX",
+    bio: "Post-production editor fluent in Premiere, DaVinci Resolve, and Avid. Fast turnaround, comfortable with narrative and commercial work.",
+    credits: "Cut Fast (commercial, 2023)\nBloom (short, 2022)",
+    reelFile: "reel_sofia.mp4", resumeFile: "resume_sofia.pdf", headshotFile: "headshot_sofia.jpg",
+    status: "rejected", appliedAt: "4 days ago"
+  },
+];
+
+const STEP_LABELS = ["Account", "Headshot", "Profession", "Files", "Bio & Credits", "Review"];
+
+/* ─── Global Styles ─────────────────────────────────────────────────── */
+const GlobalStyle = () => (
+  <style>{`
+    body { font-family: 'IBM Plex Sans', sans-serif; background: #faf9f7; color: #0f0e0d; }
+
+    /* Nav */
+    .fl-nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 28px; height: 58px;
+      border-bottom: 1px solid #e8e4de; background: #faf9f7;
+      position: sticky; top: 0; z-index: 50;
+    }
+    .fl-logo { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 600; letter-spacing: -0.3px; }
+    .fl-logo em { font-style: italic; color: #8B4513; }
+    .fl-nav-tabs { display: flex; gap: 4px; }
+    .fl-nav-tab {
+      padding: 7px 18px; border-radius: 7px; cursor: pointer;
+      font-size: 13px; font-weight: 500; border: none;
+      background: transparent; color: #6b6560;
+      font-family: 'IBM Plex Sans', sans-serif; transition: all .15s;
+    }
+    .fl-nav-tab:hover { background: #f0ece6; color: #0f0e0d; }
+    .fl-nav-tab.active { background: #0f0e0d; color: #faf9f7; }
+
+    /* Progress */
+    .progress-rail { display: flex; align-items: flex-start; margin-bottom: 32px; }
+    .step-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative; }
+    .step-item:not(:last-child)::after {
+      content: ''; position: absolute;
+      top: 14px; left: calc(50% + 15px); right: calc(-50% + 15px);
+      height: 1px; background: #e8e4de; z-index: 0;
+    }
+    .step-item.done::after { background: #8B4513; }
+    .step-bubble {
+      width: 29px; height: 29px; border-radius: 50%;
+      border: 1.5px solid #ccc8c2; background: #faf9f7; color: #9a9490;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 500; position: relative; z-index: 1;
+      transition: all .25s;
+    }
+    .step-item.active .step-bubble { border-color: #8B4513; background: #8B4513; color: #fff; }
+    .step-item.done .step-bubble { border-color: #8B4513; background: #fff5f0; color: #8B4513; }
+    .step-name { font-size: 11px; color: #9a9490; text-align: center; white-space: nowrap; }
+    .step-item.active .step-name { color: #0f0e0d; font-weight: 500; }
+
+    /* Card */
+    .card {
+      background: #fff; border: 1px solid #e8e4de; border-radius: 14px;
+      padding: 28px 28px 24px;
+      animation: fadeUp .22s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(7px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .card-title { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 600; margin-bottom: 4px; }
+    .card-sub { font-size: 13px; color: #6b6560; margin-bottom: 22px; }
+
+    /* Fields */
+    .field { margin-bottom: 15px; }
+    .field label { display: block; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .7px; color: #6b6560; margin-bottom: 6px; }
+    .field input, .field textarea {
+      width: 100%; padding: 10px 13px;
+      border: 1px solid #ddd9d3; border-radius: 8px;
+      background: #faf9f7; color: #0f0e0d;
+      font-family: 'IBM Plex Sans', sans-serif; font-size: 14px;
+      outline: none; transition: border .15s, background .15s;
+    }
+    .field input:focus, .field textarea:focus { border-color: #8B4513; background: #fff; }
+    .field textarea { resize: vertical; min-height: 80px; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    /* Upload */
+    .upload-zone {
+      border: 1.5px dashed #ccc8c2; border-radius: 10px;
+      padding: 26px 18px; text-align: center; cursor: pointer;
+      transition: all .2s; background: #fdf9f7;
+    }
+    .upload-zone:hover { border-color: #8B4513; background: #fdf5f0; }
+    .upload-zone.uploaded { border-style: solid; border-color: #8B4513; background: #fff8f5; }
+    .upload-icon { font-size: 24px; margin-bottom: 8px; }
+    .upload-text { font-size: 13px; color: #6b6560; line-height: 1.5; }
+    .upload-text strong { color: #0f0e0d; }
+    .upload-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; color: #8B4513; font-weight: 500; margin-top: 8px;
+      background: #fff5f0; border: 1px solid #f0cfc0; border-radius: 20px; padding: 3px 11px;
+    }
+
+    /* Professions */
+    .prof-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .prof-chip {
+      border: 1.5px solid #e8e4de; border-radius: 10px;
+      padding: 13px 8px; text-align: center; cursor: pointer;
+      font-size: 13px; color: #6b6560; background: #faf9f7;
+      transition: all .15s; font-family: 'IBM Plex Sans', sans-serif;
+    }
+    .prof-chip:hover { border-color: #8B4513; color: #0f0e0d; background: #fff8f5; }
+    .prof-chip.selected { border-color: #8B4513; background: #fff5f0; color: #8B4513; font-weight: 500; }
+    .prof-icon { font-size: 22px; display: block; margin-bottom: 5px; }
+
+    /* Buttons */
+    .btn-row { display: flex; justify-content: space-between; align-items: center; margin-top: 22px; }
+    .btn {
+      padding: 10px 22px; border-radius: 8px; font-size: 14px; font-weight: 500;
+      cursor: pointer; border: 1px solid #ddd9d3; background: transparent;
+      color: #0f0e0d; transition: all .15s; font-family: 'IBM Plex Sans', sans-serif;
+    }
+    .btn:hover { background: #f0ece6; }
+    .btn-primary { background: #0f0e0d; color: #faf9f7; border-color: #0f0e0d; }
+    .btn-primary:hover { background: #2a2825; }
+    .btn-accent { background: #8B4513; color: #fff; border-color: #8B4513; }
+    .btn-accent:hover { background: #7a3c10; }
+    .btn-danger { color: #c0392b; border-color: #f5c6c2; background: transparent; }
+    .btn-danger:hover { background: #fdf2f1; }
+    .btn-ghost { color: #6b6560; border: none; background: transparent; padding: 10px 14px; }
+    .btn-ghost:hover { color: #0f0e0d; background: #f0ece6; }
+
+    /* Review */
+    .review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 18px; }
+    .review-cell { background: #f7f4ef; border-radius: 8px; padding: 10px 13px; }
+    .review-cell-label { font-size: 10px; text-transform: uppercase; letter-spacing: .6px; color: #9a9490; font-weight: 500; margin-bottom: 2px; }
+    .review-cell-val { font-size: 13px; font-weight: 500; color: #0f0e0d; }
+    .review-cell-val.ok { color: #1a7a4a; }
+    .review-cell-val.miss { color: #c0392b; }
+
+    /* Success */
+    .success-screen { text-align: center; padding: 52px 20px; }
+    .success-ring {
+      width: 76px; height: 76px; border-radius: 50%;
+      background: #fff5f0; border: 2px solid #f0cfc0;
+      margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 30px;
+    }
+    .success-title { font-family: 'Playfair Display', serif; font-size: 28px; margin-bottom: 10px; }
+    .success-sub { font-size: 14px; color: #6b6560; max-width: 340px; margin: 0 auto 26px; line-height: 1.75; }
+
+    /* Admin */
+    .admin-wrap { padding: 26px 28px; max-width: 920px; margin: 0 auto; }
+    .admin-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 22px; }
+    .admin-title { font-family: 'Playfair Display', serif; font-size: 25px; font-weight: 600; }
+    .admin-date { font-size: 12px; color: #9a9490; }
+    .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+    .stat-tile { background: #fff; border: 1px solid #e8e4de; border-radius: 12px; padding: 14px 16px; }
+    .stat-tile-label { font-size: 10px; text-transform: uppercase; letter-spacing: .6px; color: #9a9490; font-weight: 500; margin-bottom: 4px; }
+    .stat-tile-val { font-size: 30px; font-weight: 300; line-height: 1; }
+    .stat-tile.s-pending .stat-tile-val { color: #B8860B; }
+    .stat-tile.s-approved .stat-tile-val { color: #1a7a4a; }
+    .stat-tile.s-rejected .stat-tile-val { color: #c0392b; }
+    .filter-bar { display: flex; gap: 6px; margin-bottom: 16px; align-items: center; flex-wrap: wrap; }
+    .filter-pill {
+      padding: 5px 15px; border-radius: 20px; font-size: 12px; font-weight: 500;
+      cursor: pointer; border: 1px solid #ddd9d3; background: transparent;
+      color: #6b6560; font-family: 'IBM Plex Sans', sans-serif; transition: all .15s;
+    }
+    .filter-pill:hover { border-color: #8B4513; color: #8B4513; }
+    .filter-pill.active { background: #0f0e0d; color: #faf9f7; border-color: #0f0e0d; }
+    .filter-search {
+      margin-left: auto; padding: 6px 14px; border-radius: 20px;
+      border: 1px solid #ddd9d3; background: #faf9f7; color: #0f0e0d;
+      font-size: 13px; font-family: 'IBM Plex Sans', sans-serif;
+      outline: none; width: 200px; transition: border .15s;
+    }
+    .filter-search:focus { border-color: #8B4513; }
+    .app-list { display: flex; flex-direction: column; gap: 8px; }
+    .app-row { background: #fff; border: 1px solid #e8e4de; border-radius: 12px; overflow: hidden; transition: border-color .15s; }
+    .app-row:hover { border-color: #ccc8c2; }
+    .app-row.expanded { border-color: #8B4513; }
+    .app-row-header {
+      display: grid; grid-template-columns: 44px 1fr auto;
+      gap: 14px; padding: 14px 18px; cursor: pointer; align-items: center;
+    }
+    .app-avatar { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; flex-shrink: 0; }
+    .app-name { font-size: 15px; font-weight: 500; margin-bottom: 2px; }
+    .app-meta { font-size: 12px; color: #6b6560; }
+    .app-right { display: flex; align-items: center; gap: 8px; }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+    .badge.pending { background: #FEF9E7; color: #B8860B; border: 1px solid #f5e4a0; }
+    .badge.approved { background: #eafaf1; color: #1a7a4a; border: 1px solid #a9dfbf; }
+    .badge.rejected { background: #fdf2f1; color: #c0392b; border: 1px solid #f5c6c2; }
+    .expand-toggle { font-size: 11px; color: #9a9490; background: none; border: none; cursor: pointer; padding: 4px 8px; font-family: 'IBM Plex Sans', sans-serif; white-space: nowrap; }
+    .expand-toggle:hover { color: #0f0e0d; }
+    .app-detail { border-top: 1px solid #f0ece6; padding: 20px 18px 18px; animation: fadeUp .2s ease both; }
+    .detail-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    .detail-label { font-size: 10px; text-transform: uppercase; letter-spacing: .6px; color: #9a9490; font-weight: 500; margin-bottom: 4px; }
+    .detail-val { font-size: 13px; line-height: 1.6; white-space: pre-line; }
+    .file-row {
+      display: flex; align-items: center; gap: 9px;
+      background: #f7f4ef; border-radius: 8px; padding: 9px 13px;
+      font-size: 13px; color: #6b6560; margin-bottom: 7px;
+    }
+    .file-storage-badge {
+      margin-left: auto; font-size: 10px; font-weight: 500;
+      background: #fff; border: 1px solid #e8e4de; border-radius: 12px; padding: 2px 9px; color: #6b6560;
+    }
+    .action-strip { display: flex; gap: 8px; margin-top: 16px; align-items: center; flex-wrap: wrap; }
+    .undo-text { font-size: 12px; color: #9a9490; margin-top: 12px; }
+    .undo-link { color: #8B4513; cursor: pointer; text-decoration: underline; background: none; border: none; font-size: 12px; font-family: 'IBM Plex Sans', sans-serif; }
+
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15,14,13,.45); display: flex; align-items: center; justify-content: center; z-index: 200; }
+    .modal-box { background: #fff; border-radius: 16px; padding: 30px 28px; width: 390px; max-width: 95vw; border: 1px solid #e8e4de; animation: fadeUp .2s ease both; }
+    .modal-title { font-family: 'Playfair Display', serif; font-size: 20px; margin-bottom: 10px; }
+    .modal-body { font-size: 13px; color: #6b6560; line-height: 1.7; margin-bottom: 22px; }
+    .modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
+
+    /* Toast */
+    .toast-wrap { position: fixed; bottom: 22px; right: 22px; z-index: 300; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; pointer-events: none; }
+    .toast-item { background: #0f0e0d; color: #faf9f7; padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 500; animation: fadeUp .25s ease both; }
+
+    .apply-wrap { padding: 30px 20px; max-width: 600px; margin: 0 auto; }
+    .section-note { font-size: 12px; color: #9a9490; margin-top: 7px; }
+    .empty-state { text-align: center; padding: 48px 20px; color: #9a9490; font-size: 14px; }
+    .terms-note { font-size: 12px; color: #9a9490; line-height: 1.7; background: #fdf9f7; border: 1px solid #f0ece6; border-radius: 8px; padding: 11px 13px; margin-bottom: 6px; }
+  `}</style>
+);
+
+/* ─── Toast ─────────────────────────────────────────────────────────── */
+function useToast() {
+  const [toasts, setToasts] = useState([]);
+  const push = (msg) => {
+    const id = Date.now();
+    setToasts(p => [...p, { id, msg }]);
+    setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 3200);
+  };
+  return { toasts, push };
+}
+
+/* ─── Application Flow ──────────────────────────────────────────────── */
+function ApplicationFlow({ onSubmit }) {
+  const [step, setStep] = useState(1);
+  const [form, setForm] = useState({
+    firstName: "", lastName: "", email: "", password: "", city: "",
+    profession: "",
+    headshotName: "", reelName: "", resumeName: "",
+    bio: "", credits: "", imdb: "", website: "",
+  });
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const next = () => setStep(s => s + 1);
+  const prev = () => setStep(s => s - 1);
+
+  if (step === STEP_LABELS.length + 1) {
+    return (
+      <div className="success-screen">
+        <div className="success-ring">🎬</div>
+        <div className="success-title">Application submitted!</div>
+        <div className="success-sub">
+          Your profile is under review. Our team will respond within 48 hours.
+          In the meantime, explore events and articles as a guest.
+        </div>
+        <button className="btn btn-accent" onClick={() => { setStep(1); setForm({ firstName:"",lastName:"",email:"",password:"",city:"",profession:"",headshotName:"",reelName:"",resumeName:"",bio:"",credits:"",imdb:"",website:"" }); }}>
+          Start new application
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="progress-rail">
+        {STEP_LABELS.map((label, i) => {
+          const n = i + 1;
+          const cls = n < step ? "done" : n === step ? "active" : "";
+          return (
+            <div key={n} className={`step-item ${cls}`}>
+              <div className="step-bubble">{n < step ? "✓" : n}</div>
+              <div className="step-name">{label}</div>
+            </div>
+          );
+        })}
+      </div>
+
+      {step === 1 && (
+        <div className="card">
+          <div className="card-title">Create your account</div>
+          <div className="card-sub">Start your FilmLink creator application. No union card required.</div>
+          <div className="field-row">
+            <div className="field"><label>First name</label><input placeholder="Maya" value={form.firstName} onChange={e => set("firstName", e.target.value)} /></div>
+            <div className="field"><label>Last name</label><input placeholder="Osei" value={form.lastName} onChange={e => set("lastName", e.target.value)} /></div>
+          </div>
+          <div className="field"><label>Email</label><input type="email" placeholder="maya@example.com" value={form.email} onChange={e => set("email", e.target.value)} /></div>
+          <div className="field"><label>Password</label><input type="password" placeholder="8+ characters" value={form.password} onChange={e => set("password", e.target.value)} /></div>
+          <div className="field"><label>City / Location</label><input placeholder="Los Angeles, CA" value={form.city} onChange={e => set("city", e.target.value)} /></div>
+          <div className="btn-row">
+            <span style={{fontSize:12,color:"#9a9490"}}>Have an account? <a href="#" style={{color:"#8B4513"}}>Log in</a></span>
+            <button className="btn btn-primary" onClick={next}>Continue →</button>
+          </div>
+        </div>
+      )}
+
+      {step === 2 && (
+        <div className="card">
+          <div className="card-title">Upload your headshot</div>
+          <div className="card-sub">Use a professional photo — clear background, good lighting, face front-and-center.</div>
+          <div className={`upload-zone ${form.headshotName ? "uploaded" : ""}`} onClick={() => !form.headshotName && set("headshotName", "headshot_professional.jpg")}>
+            <div className="upload-icon">{form.headshotName ? "✅" : "📷"}</div>
+            {form.headshotName
+              ? (<><div className="upload-text"><strong>{form.headshotName}</strong></div><div className="upload-badge">☁️ Stored via Cloudflare R2</div></>)
+              : (<div className="upload-text"><strong>Click to upload</strong> or drag &amp; drop<br/>JPG, PNG — up to 10 MB</div>)
+            }
+          </div>
+          <div className="section-note">🔒 Files upload directly to Cloudflare R2. Only you and FilmLink admins can access them.</div>
+          <div className="btn-row">
+            <button className="btn" onClick={prev}>← Back</button>
+            <button className="btn btn-primary" onClick={next}>Continue →</button>
+          </div>
+        </div>
+      )}
+
+      {step === 3 && (
+        <div className="card">
+          <div className="card-title">What's your primary role?</div>
+          <div className="card-sub">Choose how you'll primarily appear in the FilmLink network.</div>
+          <div className="prof-grid">
+            {PROFESSIONS.map(p => (
+              <div key={p.label} className={`prof-chip ${form.profession === p.label ? "selected" : ""}`} onClick={() => set("profession", p.label)}>
+                <span className="prof-icon">{p.icon}</span>{p.label}
+              </div>
+            ))}
+          </div>
+          <div className="btn-row">
+            <button className="btn" onClick={prev}>← Back</button>
+            <button className="btn btn-primary" onClick={next}>Continue →</button>
+          </div>
+        </div>
+      )}
+
+      {step === 4 && (
+        <div className="card">
+          <div className="card-title">Upload your reel &amp; resume</div>
+          <div className="card-sub">Show your best work. Files are stored securely and only shared with project posters you apply to.</div>
+          <div className="field">
+            <label>Demo reel (video)</label>
+            <div className={`upload-zone ${form.reelName ? "uploaded" : ""}`} style={{padding:"18px 16px"}} onClick={() => !form.reelName && set("reelName", "demo_reel_2024.mp4")}>
+              {form.reelName
+                ? (<><div style={{color:"#1a7a4a",fontWeight:500}}>✓ {form.reelName}</div><div className="upload-badge" style={{marginTop:7}}>☁️ AWS S3 — us-east-1</div></>)
+                : (<div className="upload-text"><strong>Upload reel</strong> — MP4, MOV — up to 500 MB</div>)
+              }
+            </div>
+          </div>
+          <div className="field">
+            <label>Resume / CV</label>
+            <div className={`upload-zone ${form.resumeName ? "uploaded" : ""}`} style={{padding:"18px 16px"}} onClick={() => !form.resumeName && set("resumeName", "resume_2024.pdf")}>
+              {form.resumeName
+                ? (<><div style={{color:"#1a7a4a",fontWeight:500}}>✓ {form.resumeName}</div><div className="upload-badge" style={{marginTop:7}}>☁️ AWS S3 — us-east-1</div></>)
+                : (<div className="upload-text"><strong>Upload resume</strong> — PDF, DOCX — up to 20 MB</div>)
+              }
+            </div>
+          </div>
+          <div className="btn-row">
+            <button className="btn" onClick={prev}>← Back</button>
+            <button className="btn btn-primary" onClick={next}>Continue →</button>
+          </div>
+        </div>
+      )}
+
+      {step === 5 && (
+        <div className="card">
+          <div className="card-title">Tell us about yourself</div>
+          <div className="card-sub">Your bio and credits appear on your public FilmLink profile and are reviewed by our team.</div>
+          <div className="field">
+            <label>Bio</label>
+            <textarea placeholder="Trained at NYU Tisch, focused on dramatic film and independent productions..." value={form.bio} onChange={e => set("bio", e.target.value)} style={{minHeight:90}} />
+          </div>
+          <div className="field">
+            <label>Notable credits (one per line)</label>
+            <textarea placeholder={"The Last Station (short film, 2023)\nEcho (short, 2022)"} value={form.credits} onChange={e => set("credits", e.target.value)} style={{minHeight:70}} />
+          </div>
+          <div className="field-row">
+            <div className="field"><label>IMDb link (optional)</label><input placeholder="imdb.com/name/nm..." value={form.imdb} onChange={e => set("imdb", e.target.value)} /></div>
+            <div className="field"><label>Website (optional)</label><input placeholder="yoursite.com" value={form.website} onChange={e => set("website", e.target.value)} /></div>
+          </div>
+          <div className="btn-row">
+            <button className="btn" onClick={prev}>← Back</button>
+            <button className="btn btn-primary" onClick={next}>Review →</button>
+          </div>
+        </div>
+      )}
+
+      {step === 6 && (
+        <div className="card">
+          <div className="card-title">Review &amp; submit</div>
+          <div className="card-sub">Everything look right? You can go back to edit any section.</div>
+          <div className="review-grid">
+            {[
+              ["Name", (form.firstName||"Maya")+" "+(form.lastName||"Osei")],
+              ["Location", form.city||"Los Angeles, CA"],
+              ["Profession", form.profession||"Actor"],
+              ["Headshot", form.headshotName ? "✓ Uploaded" : "✗ Missing"],
+              ["Demo Reel", form.reelName ? "✓ Uploaded" : "✗ Missing"],
+              ["Resume", form.resumeName ? "✓ Uploaded" : "✗ Missing"],
+            ].map(([k,v]) => (
+              <div key={k} className="review-cell">
+                <div className="review-cell-label">{k}</div>
+                <div className={`review-cell-val ${v.startsWith("✓")?"ok":v.startsWith("✗")?"miss":""}`}>{v}</div>
+              </div>
+            ))}
+          </div>
+          {form.bio && (
+            <div style={{background:"#f7f4ef",borderRadius:8,padding:"10px 13px",fontSize:13,color:"#6b6560",marginBottom:14,lineHeight:1.6}}>
+              <div className="detail-label">Bio preview</div>
+              {form.bio.slice(0,120)}{form.bio.length > 120 ? "…" : ""}
+            </div>
+          )}
+          <div className="terms-note">
+            By submitting you agree to FilmLink's Terms of Service and Creator Guidelines. Applications are reviewed by our team within 48 hours. We may request additional materials before a final decision.
+          </div>
+          <div className="btn-row">
+            <button className="btn" onClick={prev}>← Edit</button>
+            <button className="btn btn-accent" onClick={() => { onSubmit && onSubmit(); next(); }}>Submit application →</button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+/* ─── Admin App Row ─────────────────────────────────────────────────── */
+function AppRow({ app, onApprove, onReject, onUndo, onRequestInfo }) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <div className={`app-row ${expanded ? "expanded" : ""}`}>
+      <div className="app-row-header" onClick={() => setExpanded(e => !e)}>
+        <div className="app-avatar" style={{background:app.color,color:app.textColor}}>{app.initials}</div>
+        <div>
+          <div className="app-name">{app.name}</div>
+          <div className="app-meta">{app.profession} · {app.location} · {app.appliedAt}</div>
+        </div>
+        <div className="app-right">
+          <span className={`badge ${app.status}`}>{app.status}</span>
+          <button className="expand-toggle">{expanded ? "Close ↑" : "Review ↓"}</button>
+        </div>
+      </div>
+      {expanded && (
+        <div className="app-detail">
+          <div className="detail-cols">
+            <div><div className="detail-label">Bio</div><div className="detail-val">{app.bio}</div></div>
+            <div><div className="detail-label">Credits</div><div className="detail-val">{app.credits}</div></div>
+          </div>
+          <div className="detail-label" style={{marginBottom:8}}>Uploaded files</div>
+          <div className="file-row"><span>🎬</span><span>{app.reelFile}</span><span className="file-storage-badge">AWS S3</span></div>
+          <div className="file-row"><span>📄</span><span>{app.resumeFile}</span><span className="file-storage-badge">AWS S3</span></div>
+          <div className="file-row"><span>🖼️</span><span>{app.headshotFile}</span><span className="file-storage-badge">Cloudflare R2</span></div>
+          {app.status === "pending" ? (
+            <div className="action-strip">
+              <button className="btn btn-accent" onClick={() => onApprove(app.id)}>✓ Approve</button>
+              <button className="btn btn-danger" onClick={() => onReject(app.id)}>✗ Reject</button>
+              <button className="btn btn-ghost" onClick={() => onRequestInfo(app.id)}>Request more info</button>
+            </div>
+          ) : (
+            <div className="undo-text">
+              This application was <strong>{app.status}</strong>.{" "}
+              <button className="undo-link" onClick={() => onUndo(app.id)}>Undo</button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Admin Dashboard ───────────────────────────────────────────────── */
+function AdminDashboard({ push }) {
+  const [apps, setApps] = useState(SEED_APPS);
+  const [filter, setFilter] = useState("pending");
+  const [search, setSearch] = useState("");
+  const [modal, setModal] = useState(null);
+
+  const counts = {
+    all: apps.length,
+    pending: apps.filter(a => a.status === "pending").length,
+    approved: apps.filter(a => a.status === "approved").length,
+    rejected: apps.filter(a => a.status === "rejected").length,
+  };
+
+  const filtered = apps
+    .filter(a => filter === "all" || a.status === filter)
+    .filter(a => !search || a.name.toLowerCase().includes(search.toLowerCase()) || a.profession.toLowerCase().includes(search.toLowerCase()));
+
+  const setStatus = (id, status) => setApps(prev => prev.map(a => a.id === id ? {...a, status} : a));
+
+  const confirmAction = () => {
+    const app = apps.find(a => a.id === modal.id);
+    setStatus(modal.id, modal.action);
+    setModal(null);
+    if (modal.action === "approved") push(`✓ ${app.name} approved — welcome email sent`);
+    else push(`${app.name}'s application rejected`);
+  };
+
+  return (
+    <div className="admin-wrap">
+      <div className="admin-head">
+        <div className="admin-title">Creator Applications</div>
+        <div className="admin-date">{new Date().toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})}</div>
+      </div>
+
+      <div className="stat-row">
+        {[["Total","",counts.all],["Pending","s-pending",counts.pending],["Approved","s-approved",counts.approved],["Rejected","s-rejected",counts.rejected]].map(([label,cls,val]) => (
+          <div key={label} className={`stat-tile ${cls}`}>
+            <div className="stat-tile-label">{label}</div>
+            <div className="stat-tile-val">{val}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="filter-bar">
+        {["all","pending","approved","rejected"].map(f => (
+          <button key={f} className={`filter-pill ${filter===f?"active":""}`} onClick={() => setFilter(f)}>
+            {f.charAt(0).toUpperCase()+f.slice(1)} {f!=="all"&&<span style={{opacity:.7}}>({counts[f]})</span>}
+          </button>
+        ))}
+        <input className="filter-search" placeholder="Search by name or role..." value={search} onChange={e => setSearch(e.target.value)} />
+      </div>
+
+      <div className="app-list">
+        {filtered.length === 0
+          ? <div className="empty-state">No applications match this filter.</div>
+          : filtered.map(app => (
+            <AppRow
+              key={app.id} app={app}
+              onApprove={id => setModal({id, action:"approved"})}
+              onReject={id => setModal({id, action:"rejected"})}
+              onUndo={id => { setStatus(id,"pending"); push("Application moved back to pending"); }}
+              onRequestInfo={id => { const a=apps.find(x=>x.id===id); push(`📧 Info request sent to ${a.name}`); }}
+            />
+          ))
+        }
+      </div>
+
+      {modal && (() => {
+        const app = apps.find(a => a.id === modal.id);
+        const isApprove = modal.action === "approved";
+        return (
+          <div className="modal-overlay" onClick={() => setModal(null)}>
+            <div className="modal-box" onClick={e => e.stopPropagation()}>
+              <div className="modal-title">{isApprove ? "Approve" : "Reject"} {app.name}?</div>
+              <div className="modal-body">
+                {isApprove
+                  ? `${app.name} will receive a welcome email and gain full creator access to FilmLink — project applications, mixers, and their public profile.`
+                  : `${app.name}'s application will be declined. They'll be notified and can reapply after 30 days.`
+                }
+              </div>
+              <div className="modal-btns">
+                <button className="btn btn-ghost" onClick={() => setModal(null)}>Cancel</button>
+                <button className={`btn ${isApprove?"btn-accent":"btn-danger"}`} onClick={confirmAction}>
+                  {isApprove ? "Yes, approve" : "Yes, reject"}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+    </div>
+  );
+}
+
+/* ─── Root ──────────────────────────────────────────────────────────── */
+function App() {
+  const [view, setView] = useState("apply");
+  const { toasts, push } = useToast();
+
+  return (
+    <>
+      <GlobalStyle />
+      <nav className="fl-nav">
+        <div className="fl-logo">Film<em>Link</em></div>
+        <div className="fl-nav-tabs">
+          <button className={`fl-nav-tab ${view==="apply"?"active":""}`} onClick={() => setView("apply")}>Creator application</button>
+          <button className={`fl-nav-tab ${view==="admin"?"active":""}`} onClick={() => setView("admin")}>Admin dashboard</button>
+        </div>
+      </nav>
+
+      {view === "apply" && (
+        <div className="apply-wrap">
+          <ApplicationFlow onSubmit={() => push("Application submitted — we'll review within 48 hours ✓")} />
+        </div>
+      )}
+      {view === "admin" && <AdminDashboard push={push} />}
+
+      <div className="toast-wrap">
+        {toasts.map(t => <div key={t.id} className="toast-item">{t.msg}</div>)}
+      </div>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
