@@ -1,0 +1,38 @@
+{
+  "name": "@filmlink/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "main": "node_modules/expo/AppEntry.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "lint": "eslint src/",
+    "test": "jest"
+  },
+  "dependencies": {
+    "expo": "~50.0.0",
+    "expo-status-bar": "~1.11.1",
+    "react": "18.2.0",
+    "react-native": "0.73.2",
+    "@react-navigation/native": "^6.1.9",
+    "@react-navigation/bottom-tabs": "^6.5.11",
+    "@react-navigation/native-stack": "^6.9.17",
+    "react-native-safe-area-context": "4.8.2",
+    "react-native-screens": "~3.29.0",
+    "expo-image-picker": "~14.7.1",
+    "expo-secure-store": "~12.8.1",
+    "axios": "^1.6.2",
+    "@tanstack/react-query": "^5.12.2",
+    "zustand": "^4.4.7"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.0",
+    "eslint": "^8.55.0",
+    "jest": "^29.7.0",
+    "jest-expo": "~50.0.1"
+  },
+  "jest": {
+    "preset": "jest-expo"
+  }
+}

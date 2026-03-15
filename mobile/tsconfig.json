@@ -1,0 +1,9 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "paths": {
+      "@filmlink/shared": ["../packages/shared/src"]
+    }
+  }
+}
