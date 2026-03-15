@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FilmLink — Where Emerging Film Creatives Connect</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --black: #0a0a0a;
+      --dark: #111111;
+      --card: #1a1a1a;
+      --accent: #e8c547;
+      --accent-dark: #c9a92e;
+      --text: #f0f0f0;
+      --muted: #888888;
+      --border: #2a2a2a;
+    }
+
+    body {
+      background-color: var(--black);
+      color: var(--text);
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+    }
+
+    /* NAV */
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 24px 60px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background-color: rgba(10, 10, 10, 0.95);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+    }
+
+    .logo {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: var(--accent);
+    }
+
+    .logo span {
+      color: var(--text);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 32px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: var(--text);
+    }
+
+    .nav-cta {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 10px 22px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+      display: inline-block;
+    }
+
+    .btn-outline {
+      border: 1px solid var(--border);
+      color: var(--text);
+      background: transparent;
+    }
+
+    .btn-outline:hover {
+      border-color: var(--muted);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--black);
+      border: 1px solid var(--accent);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-dark);
+      border-color: var(--accent-dark);
+    }
+
+    /* HERO */
+    .hero {
+      padding: 120px 60px 100px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .hero-tag {
+      display: inline-block;
+      background: rgba(232, 197, 71, 0.12);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 20px;
+      margin-bottom: 28px;
+      border: 1px solid rgba(232, 197, 71, 0.2);
+    }
+
+    h1 {
+      font-size: clamp(42px, 6vw, 76px);
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -2px;
+      margin-bottom: 24px;
+      max-width: 800px;
+    }
+
+    h1 em {
+      font-style: normal;
+      color: var(--accent);
+    }
+
+    .hero-sub {
+      font-size: 18px;
+      color: var(--muted);
+      max-width: 520px;
+      margin-bottom: 44px;
+      line-height: 1.7;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .hero-actions .btn {
+      padding: 14px 30px;
+      font-size: 15px;
+    }
+
+    /* USER TYPE SPLIT */
+    .split {
+      padding: 80px 60px;
+      background: var(--dark);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .split-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+    }
+
+    .split-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 48px 40px;
+    }
+
+    .split-card.featured {
+      border-color: var(--accent);
+    }
+
+    .split-card-tag {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+
+    .split-card h2 {
+      font-size: 28px;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+
+    .split-card p {
+      color: var(--muted);
+      font-size: 15px;
+      margin-bottom: 28px;
+      line-height: 1.65;
+    }
+
+    .split-card ul {
+      list-style: none;
+      margin-bottom: 36px;
+    }
+
+    .split-card ul li {
+      font-size: 14px;
+      color: var(--text);
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .split-card ul li::before {
+      content: "→";
+      color: var(--accent);
+      font-size: 13px;
+    }
+
+    /* FEATURES */
+    .features {
+      padding: 100px 60px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: clamp(28px, 4vw, 44px);
+      font-weight: 900;
+      letter-spacing: -1px;
+      margin-bottom: 60px;
+      max-width: 500px;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .feature-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px 28px;
+      transition: border-color 0.2s;
+    }
+
+    .feature-card:hover {
+      border-color: var(--accent);
+    }
+
+    .feature-icon {
+      font-size: 28px;
+      margin-bottom: 16px;
+    }
+
+    .feature-card h3 {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .feature-card p {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 60px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 768px) {
+      nav { padding: 20px 24px; }
+      .nav-links { display: none; }
+      .hero { padding: 80px 24px 60px; }
+      .split { padding: 60px 24px; }
+      .split-inner { grid-template-columns: 1fr; }
+      .features { padding: 60px 24px; }
+      .features-grid { grid-template-columns: 1fr; }
+      footer { padding: 32px 24px; flex-direction: column; gap: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="logo">Film<span>Link</span></div>
+    <ul class="nav-links">
+      <li><a href="#">Projects</a></li>
+      <li><a href="#">Classes</a></li>
+      <li><a href="#">Events</a></li>
+      <li><a href="#">News</a></li>
+    </ul>
+    <div class="nav-cta">
+      <a href="#" class="btn btn-outline">Log In</a>
+      <a href="#" class="btn btn-primary">Apply to Join</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-tag">Now Accepting Applications</div>
+    <h1>Where <em>emerging</em> film creatives connect.</h1>
+    <p class="hero-sub">
+      FilmLink is the private network for pre-union actors, writers, directors, and crew — find collaborators, auditions, classes, and real industry connections.
+    </p>
+    <div class="hero-actions">
+      <a href="#" class="btn btn-primary">Apply as a Creative</a>
+      <a href="#" class="btn btn-outline">Browse as a Fan</a>
+    </div>
+  </section>
+
+  <!-- USER TYPE SPLIT -->
+  <section class="split">
+    <div class="split-inner">
+      <div class="split-card featured">
+        <div class="split-card-tag">For Creatives — Application Required</div>
+        <h2>Build your career.</h2>
+        <p>A vetted, private network for actors, writers, directors, editors, cinematographers, composers, and producers who are ready to work.</p>
+        <ul>
+          <li>Post and apply for projects</li>
+          <li>Upload audition tapes</li>
+          <li>Find collaborators</li>
+          <li>Browse acting classes</li>
+          <li>Attend industry mixers</li>
+          <li>Build a professional profile</li>
+        </ul>
+        <a href="#" class="btn btn-primary">Apply Now</a>
+      </div>
+      <div class="split-card">
+        <div class="split-card-tag">For Fans — Open Access</div>
+        <h2>Discover what's next.</h2>
+        <p>Follow the rising generation of filmmakers, read indie film coverage, and attend screenings and events before everyone else.</p>
+        <ul>
+          <li>Read industry news & interviews</li>
+          <li>Follow emerging creators</li>
+          <li>Attend public events & screenings</li>
+          <li>Discover upcoming filmmakers</li>
+          <li>Festival coverage</li>
+          <li>Behind-the-scenes stories</li>
+        </ul>
+        <a href="#" class="btn btn-outline">Explore Now</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="features">
+    <div class="section-label">Platform Features</div>
+    <h2 class="section-title">Everything in one place.</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🎬</div>
+        <h3>Project Marketplace</h3>
+        <p>Browse and post short films, indie features, music videos, and web series. Apply directly with your profile and audition tape.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🧑‍🎤</div>
+        <h3>Creator Profiles</h3>
+        <p>A professional home for your reel, resume, credits, headshots, and filmography. Follow others and grow your network.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎭</div>
+        <h3>Acting Classes</h3>
+        <p>Find vetted acting coaches and schools. Read verified member reviews, view schedules, and book in-person or online classes.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📅</div>
+        <h3>Events & Mixers</h3>
+        <p>Industry panels, networking mixers, screenings, and workshops — all in one calendar with RSVP and ticketing built in.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📡</div>
+        <h3>Activity Feed</h3>
+        <p>See what your network is working on. Bookings, new projects, workshops attended — stay connected to the community.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📰</div>
+        <h3>Entertainment News</h3>
+        <p>Indie film coverage, festival news, interviews, and behind-the-scenes stories curated for film culture fans.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="logo" style="font-size:16px;">Film<span style="color:#f0f0f0">Link</span></div>
+    <div>© 2025 FilmLink. Working title. All rights reserved.</div>
+  </footer>
+
+</body>
+</html>
