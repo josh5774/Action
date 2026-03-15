@@ -1,74 +1,136 @@
-# FilmLink
+# FilmLink — Backend API
 
-A community platform connecting emerging film industry creatives with opportunities, education, and networking.
+Node.js / Express / PostgreSQL backend for the FilmLink platform.
 
-## Monorepo Structure
+---
 
-```
-filmlink/
-├── web/          React web app
-├── mobile/       React Native (Expo) mobile app
-├── backend/      Node.js + Express API
-├── packages/
-│   └── shared/   Shared constants, types, validators
-├── turbo.json
-└── package.json
-```
+## Quick Start
 
-## Tech Stack
-
-| Layer    | Technology                        |
-|----------|-----------------------------------|
-| Web      | React 18, React Router, Axios, Zustand |
-| Mobile   | React Native (Expo), React Navigation |
-| Backend  | Node.js, Express, PostgreSQL      |
-| Monorepo | Turborepo + npm workspaces        |
-
-## Getting Started
-
-### Prerequisites
-- Node.js >= 18
-- PostgreSQL
-- npm >= 9
-
-### Install all dependencies
+### 1. Install dependencies
 ```bash
 npm install
 ```
 
-### Environment variables
-Copy `.env.example` to `.env` in each workspace:
+### 2. Set up environment variables
 ```bash
-cp backend/.env.example backend/.env
-cp web/.env.example web/.env
-cp mobile/.env.example mobile/.env
+cp .env.example .env
+# Edit .env and fill in DATABASE_URL and JWT_SECRET
 ```
 
-### Run all dev servers
+### 3. Provision a free Postgres database
+
+**Option A — Supabase (recommended)**
+1. Create a free project at https://supabase.com
+2. Go to **Settings → Database → Connection string → URI**
+3. Copy the URI and paste it as `DATABASE_URL` in your `.env`
+
+**Option B — Railway**
+1. Create a free project at https://railway.app
+2. Add a **PostgreSQL** service
+3. Click the service → **Connect** → copy the `DATABASE_URL`
+4. Paste it in your `.env`
+
+### 4. Run migrations
 ```bash
-npm run dev
+npm run migrate
+```
+This applies `db/migrations/001_initial_schema.sql` and tracks it in a `_migrations` table.
+
+### 5. Start the dev server
+```bash
+npm run dev        # nodemon — auto-restarts on changes
+# or
+npm start          # plain node
 ```
 
-Or run individually:
-```bash
-# API server (port 4000)
-cd backend && npm run dev
+The API will be available at **http://localhost:3000**.
+Health check: `GET /health`
 
-# Web app (port 3000)
-cd web && npm run dev
+---
 
-# Mobile (Expo)
-cd mobile && npm start
+## Project Structure
+
+```
+filmlink-backend/
+├── server.js                   # Express app entry point
+├── config/
+│   └── db.js                   # PostgreSQL connection pool
+├── routes/                     # Express routers (URL → controller)
+│   ├── auth.js
+│   ├── users.js
+│   ├── projects.js
+│   ├── applications.js
+│   ├── events.js
+│   ├── articles.js
+│   ├── classes.js
+│   └── admin.js
+├── controllers/                # Request handlers (business logic)
+│   ├── authController.js
+│   ├── usersController.js
+│   ├── projectsController.js
+│   ├── eventsController.js
+│   ├── articlesController.js
+│   └── adminController.js
+├── middleware/
+│   ├── auth.js                 # JWT verification, role guards
+│   ├── validate.js             # express-validator error formatter
+│   └── errorHandler.js        # Central error + 404 handler
+└── db/
+    ├── migrate.js              # Migration runner script
+    └── migrations/
+        └── 001_initial_schema.sql
 ```
 
-### Database setup
-```bash
-psql -U postgres -c "CREATE DATABASE filmlink;"
-psql -U postgres -d filmlink -f backend/src/db/migrations/001_initial_schema.sql
+---
+
+## API Overview
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/api/auth/register` | — | Create account |
+| POST | `/api/auth/login` | — | Login, receive JWT |
+| GET | `/api/auth/me` | ✓ | Current user info |
+| GET | `/api/users/:id/profile` | — | View creative profile |
+| PUT | `/api/users/me/profile` | Creative | Update own profile |
+| POST | `/api/users/:id/follow` | ✓ | Follow a user |
+| DELETE | `/api/users/:id/follow` | ✓ | Unfollow a user |
+| GET | `/api/projects` | — | List/filter projects |
+| GET | `/api/projects/:id` | — | Project + roles detail |
+| POST | `/api/projects` | Creative | Create project |
+| POST | `/api/projects/roles/:roleId/apply` | Creative | Apply to a role |
+| POST | `/api/applications` | ✓ | Submit creator application |
+| GET | `/api/applications/me` | ✓ | Check application status |
+| GET | `/api/events` | — | Upcoming events |
+| POST | `/api/events/:id/rsvp` | ✓ | RSVP to event |
+| GET | `/api/articles` | — | Published articles |
+| GET | `/api/articles/:slug` | — | Single article |
+| GET | `/api/classes` | — | Acting classes + ratings |
+| POST | `/api/classes/:id/reviews` | ✓ | Submit a review |
+| GET | `/api/admin/applications` | Admin | View pending applications |
+| PATCH | `/api/admin/applications/:id` | Admin | Approve / reject |
+| PATCH | `/api/admin/users/:id/deactivate` | Admin | Suspend a user |
+
+---
+
+## User Types & Auth Flow
+
+```
+Fan (default)
+  └─ submits creator application (POST /api/applications)
+       └─ Admin approves → user_type promoted to 'creative'
+            └─ Can now post projects, apply to roles, edit profile
+
+Admin
+  └─ Set manually in DB: UPDATE users SET user_type = 'admin' WHERE email = '...';
 ```
 
-## Development Phases
+---
 
-- **Phase 1 (MVP):** Profiles, projects, applications, articles, events, admin dashboard
-- **Phase 2:** Messaging, activity feed, reviews, push notifications
-- **Phase 3:** Video auditions, advanced search, premium memberships
+## Deployment Checklist
+
+- [ ] Set `NODE_ENV=production` in environment
+- [ ] Set a strong random `JWT_SECRET`
+- [ ] Set `DATABASE_URL` to production Postgres
+- [ ] Set `ALLOWED_ORIGINS` to your frontend domain(s)
+- [ ] Run `npm run migrate` against production DB
+- [ ] Deploy to Railway, Render, or Fly.io (all support Node + env vars)
