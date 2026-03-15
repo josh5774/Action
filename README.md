@@ -1,136 +1,126 @@
-# FilmLink — Backend API
+# FilmLink — Database Schema
 
-Node.js / Express / PostgreSQL backend for the FilmLink platform.
-
----
+Built with **Prisma ORM** + **PostgreSQL**.
 
 ## Quick Start
 
-### 1. Install dependencies
 ```bash
+# 1. Install dependencies
 npm install
-```
 
-### 2. Set up environment variables
-```bash
+# 2. Set your database URL
 cp .env.example .env
-# Edit .env and fill in DATABASE_URL and JWT_SECRET
+# edit .env → DATABASE_URL="postgresql://user:pass@localhost:5432/filmlink"
+
+# 3. Run the migration
+npx prisma migrate dev --name init
+
+# 4. Seed development data
+npx prisma db seed
+
+# 5. Open Prisma Studio (visual DB browser)
+npx prisma studio
 ```
 
-### 3. Provision a free Postgres database
+## File Structure
 
-**Option A — Supabase (recommended)**
-1. Create a free project at https://supabase.com
-2. Go to **Settings → Database → Connection string → URI**
-3. Copy the URI and paste it as `DATABASE_URL` in your `.env`
+```
+prisma/
+  schema.prisma           ← Single source of truth for all models
+  seed.ts                 ← Dev seed data (4 users, 1 project, 1 event, etc.)
+  migrations/
+    001_init.sql          ← Raw SQL migration (can apply directly via psql)
+```
 
-**Option B — Railway**
-1. Create a free project at https://railway.app
-2. Add a **PostgreSQL** service
-3. Click the service → **Connect** → copy the `DATABASE_URL`
-4. Paste it in your `.env`
+---
 
-### 4. Run migrations
+## Schema Overview
+
+### Core Tables
+
+| Table              | Purpose                                              |
+|--------------------|------------------------------------------------------|
+| `users`            | Auth + account info for all user types               |
+| `profiles`         | Public-facing creative profiles (1:1 with users)    |
+| `profile_skills`   | Skill tags attached to a profile                     |
+| `credits`          | Filmography / work history entries                   |
+| `portfolio_items`  | Media portfolio (images, video, PDFs)                |
+| `follows`          | Bidirectional follow graph between users             |
+| `projects`         | Project listings (short films, music videos, etc.)  |
+| `roles`            | Individual roles/positions within a project          |
+| `applications`     | Role applications submitted by creatives             |
+| `events`           | Mixers, screenings, workshops, panels                |
+| `event_attendees`  | RSVPs + check-in tracking                            |
+| `articles`         | Editorial content (news, interviews, coverage)       |
+| `acting_classes`   | Partner acting school / class listings               |
+| `class_reviews`    | Member ratings & reviews of acting classes           |
+| `notifications`    | In-app notifications for all user types              |
+| `admin_logs`       | Audit trail for all admin actions                    |
+
+---
+
+## User Types & Flow
+
+```
+FAN         →  No approval needed. Can read, RSVP, follow.
+CREATIVE    →  Submits application → Admin approves → Full access.
+ADMIN       →  Manages all content, users, applications.
+```
+
+### Creative Application Flow
+
+1. User signs up → `user_type = CREATIVE`, `status = PENDING`
+2. Submits profile (headshot, reel, bio) → Profile record created
+3. Admin reviews in dashboard → updates `status = APPROVED | REJECTED`
+4. Approved creatives can post projects, apply to roles, etc.
+
+---
+
+## Key Design Decisions
+
+### IDs
+Using `cuid()` (collision-resistant, URL-safe) instead of integer sequences for all primary keys. Easier to work with in distributed environments and safe to expose in URLs.
+
+### Arrays
+PostgreSQL native `TEXT[]` arrays for `tags` on projects, events, and articles. Simple and fast for filtering — avoids a join table for these low-cardinality values.
+
+### Denormalized Counts
+`follower_count`, `following_count`, `application_count`, `registered_count`, `review_count` are stored on parent rows. Update these with DB triggers or application-level logic on write. Avoids expensive COUNT queries on hot paths.
+
+### updated_at Triggers
+A single `set_updated_at()` trigger function is attached to all tables with `updated_at`. No need to manage this in application code.
+
+### Soft vs Hard Deletes
+Currently uses hard deletes (CASCADE). For production, consider adding `deleted_at TIMESTAMPTZ` columns to `users`, `projects`, and `applications` to support recovery and audit trails.
+
+---
+
+## Indexes
+
+All foreign keys are indexed. Additional indexes cover:
+- Composite `(status, published_at)` for feed queries on projects and articles
+- `(user_id, is_read)` for notification badge counts
+- `(project_id, status)` for application review workflows
+- `(profession, is_filled)` for role search filtering
+
+---
+
+## Environment Variables
+
+```env
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/filmlink?schema=public"
+```
+
+---
+
+## Adding a Migration
+
 ```bash
-npm run migrate
-```
-This applies `db/migrations/001_initial_schema.sql` and tracks it in a `_migrations` table.
+# After editing schema.prisma:
+npx prisma migrate dev --name describe_your_change
 
-### 5. Start the dev server
-```bash
-npm run dev        # nodemon — auto-restarts on changes
-# or
-npm start          # plain node
+# Example:
+npx prisma migrate dev --name add_messaging_tables
 ```
 
-The API will be available at **http://localhost:3000**.
-Health check: `GET /health`
-
----
-
-## Project Structure
-
-```
-filmlink-backend/
-├── server.js                   # Express app entry point
-├── config/
-│   └── db.js                   # PostgreSQL connection pool
-├── routes/                     # Express routers (URL → controller)
-│   ├── auth.js
-│   ├── users.js
-│   ├── projects.js
-│   ├── applications.js
-│   ├── events.js
-│   ├── articles.js
-│   ├── classes.js
-│   └── admin.js
-├── controllers/                # Request handlers (business logic)
-│   ├── authController.js
-│   ├── usersController.js
-│   ├── projectsController.js
-│   ├── eventsController.js
-│   ├── articlesController.js
-│   └── adminController.js
-├── middleware/
-│   ├── auth.js                 # JWT verification, role guards
-│   ├── validate.js             # express-validator error formatter
-│   └── errorHandler.js        # Central error + 404 handler
-└── db/
-    ├── migrate.js              # Migration runner script
-    └── migrations/
-        └── 001_initial_schema.sql
-```
-
----
-
-## API Overview
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | `/api/auth/register` | — | Create account |
-| POST | `/api/auth/login` | — | Login, receive JWT |
-| GET | `/api/auth/me` | ✓ | Current user info |
-| GET | `/api/users/:id/profile` | — | View creative profile |
-| PUT | `/api/users/me/profile` | Creative | Update own profile |
-| POST | `/api/users/:id/follow` | ✓ | Follow a user |
-| DELETE | `/api/users/:id/follow` | ✓ | Unfollow a user |
-| GET | `/api/projects` | — | List/filter projects |
-| GET | `/api/projects/:id` | — | Project + roles detail |
-| POST | `/api/projects` | Creative | Create project |
-| POST | `/api/projects/roles/:roleId/apply` | Creative | Apply to a role |
-| POST | `/api/applications` | ✓ | Submit creator application |
-| GET | `/api/applications/me` | ✓ | Check application status |
-| GET | `/api/events` | — | Upcoming events |
-| POST | `/api/events/:id/rsvp` | ✓ | RSVP to event |
-| GET | `/api/articles` | — | Published articles |
-| GET | `/api/articles/:slug` | — | Single article |
-| GET | `/api/classes` | — | Acting classes + ratings |
-| POST | `/api/classes/:id/reviews` | ✓ | Submit a review |
-| GET | `/api/admin/applications` | Admin | View pending applications |
-| PATCH | `/api/admin/applications/:id` | Admin | Approve / reject |
-| PATCH | `/api/admin/users/:id/deactivate` | Admin | Suspend a user |
-
----
-
-## User Types & Auth Flow
-
-```
-Fan (default)
-  └─ submits creator application (POST /api/applications)
-       └─ Admin approves → user_type promoted to 'creative'
-            └─ Can now post projects, apply to roles, edit profile
-
-Admin
-  └─ Set manually in DB: UPDATE users SET user_type = 'admin' WHERE email = '...';
-```
-
----
-
-## Deployment Checklist
-
-- [ ] Set `NODE_ENV=production` in environment
-- [ ] Set a strong random `JWT_SECRET`
-- [ ] Set `DATABASE_URL` to production Postgres
-- [ ] Set `ALLOWED_ORIGINS` to your frontend domain(s)
-- [ ] Run `npm run migrate` against production DB
-- [ ] Deploy to Railway, Render, or Fly.io (all support Node + env vars)
+Prisma tracks migration history in the `_prisma_migrations` table automatically.

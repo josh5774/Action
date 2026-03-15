@@ -1,4 +1,6 @@
-// FilmLink - Prisma Database Schema (Auth + Profiles)
+// FilmLink — Prisma Schema
+// Database: PostgreSQL
+// Run: npx prisma migrate dev --name init
 
 generator client {
   provider = "prisma-client-js"
@@ -9,6 +11,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ─────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────
+
 enum UserType {
   CREATIVE
   FAN
@@ -16,144 +22,536 @@ enum UserType {
 }
 
 enum UserStatus {
-  PENDING
-  ACTIVE
-  SUSPENDED
+  PENDING    // application submitted, awaiting review
+  APPROVED
   REJECTED
+  SUSPENDED
 }
 
 enum Profession {
   ACTOR
-  DIRECTOR
   WRITER
+  DIRECTOR
   PRODUCER
   CINEMATOGRAPHER
   EDITOR
   COMPOSER
-  PRODUCTION_DESIGNER
-  COSTUME_DESIGNER
-  SOUND_DESIGNER
   OTHER
 }
 
+enum ProjectType {
+  SHORT_FILM
+  FEATURE_FILM
+  MUSIC_VIDEO
+  STUDENT_FILM
+  WEB_SERIES
+  DOCUMENTARY
+  OTHER
+}
+
+enum CompensationType {
+  PAID
+  UNPAID
+  DEFERRED
+  COPY_CREDIT_MEALS
+}
+
+enum ProjectStatus {
+  DRAFT
+  OPEN
+  FILLED
+  COMPLETED
+  CANCELLED
+}
+
+enum ApplicationStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+enum EventType {
+  MIXER
+  SCREENING
+  PANEL
+  WORKSHOP
+  SPEAKER
+  OTHER
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+  COMPLETED
+}
+
+enum ArticleStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum MembershipTier {
+  FREE
+  PREMIUM
+}
+
+// ─────────────────────────────────────────
+// USERS
+// ─────────────────────────────────────────
+
 model User {
-  id            String     @id @default(cuid())
-  email         String     @unique
-  passwordHash  String
-  userType      UserType   @default(FAN)
-  status        UserStatus @default(ACTIVE)
-  firstName     String?
-  lastName      String?
+  id                String          @id @default(cuid())
+  email             String          @unique
+  passwordHash      String
+  userType          UserType        @default(FAN)
+  status            UserStatus      @default(PENDING)
+  membershipTier    MembershipTier  @default(FREE)
+  membershipExpiry  DateTime?
 
-  emailVerified     Boolean   @default(false)
-  emailVerifyToken  String?   @unique
-  emailVerifyExpiry DateTime?
-  resetToken        String?   @unique
-  resetTokenExpiry  DateTime?
+  emailVerified     Boolean         @default(false)
+  emailVerifyToken  String?
+  resetPasswordToken String?
+  resetPasswordExpiry DateTime?
 
-  refreshTokens RefreshToken[]
-  profile       Profile?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  lastLoginAt       DateTime?
 
-  // Follow graph
-  following     Follow[]  @relation("Follower")
-  followers     Follow[]  @relation("Following")
+  // Relations
+  profile           Profile?
+  postedProjects    Project[]       @relation("ProjectPoster")
+  roleApplications  Application[]
+  eventsAttending   EventAttendee[]
+  articlesAuthored  Article[]
+  followers         Follow[]        @relation("Following")
+  following         Follow[]        @relation("Follower")
+  reviewsWritten    ClassReview[]
+  notifications     Notification[]
+  adminActions      AdminLog[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("users")
+  @@index([email])
+  @@index([userType, status])
 }
 
-model RefreshToken {
-  id        String   @id @default(cuid())
-  token     String   @unique
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-  userAgent String?
-  ipAddress String?
-
-  @@map("refresh_tokens")
-}
+// ─────────────────────────────────────────
+// PROFILES
+// ─────────────────────────────────────────
 
 model Profile {
-  id         String  @id @default(cuid())
-  userId     String  @unique
-  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String      @id @default(cuid())
+  userId        String      @unique
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Display
-  displayName  String?
-  headshot     String?   // S3/CDN URL
-  bio          String?   @db.Text
+  // Basic info
+  firstName     String
+  lastName      String
+  displayName   String?
+  profession    Profession?
+  bio           String?
+  location      String?
+  city          String?
+  state         String?
+  country       String      @default("US")
 
-  // Creative-specific
-  profession   Profession?
-  location     String?
-  reelUrl      String?   // Hosted video URL
-  resumeUrl    String?   // PDF URL
-  website      String?
+  // Media
+  headshot      String?     // URL / CDN path
+  reelUrl       String?
+  resumeUrl     String?
+  portfolioUrl  String?
 
-  // Social links (stored as JSON for flexibility)
-  socialLinks  Json?     // { imdb, instagram, twitter, linkedin, vimeo }
+  // Social links
+  imdbUrl       String?
+  instagramUrl  String?
+  twitterUrl    String?
+  websiteUrl    String?
+  linkedinUrl   String?
 
-  // Skills + credits (arrays via Postgres)
-  skills       String[]
-  credits      Credit[]
-  portfolioItems PortfolioItem[]
+  // Stats (denormalized for performance)
+  followerCount   Int       @default(0)
+  followingCount  Int       @default(0)
 
-  // Visibility
-  isPublic     Boolean  @default(true)
+  isPublic        Boolean   @default(true)
+  isFeatured      Boolean   @default(false)   // admin can feature profiles
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  @@map("profiles")
+  // Relations
+  skills          ProfileSkill[]
+  credits         Credit[]
+  portfolioItems  PortfolioItem[]
+
+  @@index([profession])
+  @@index([location])
+  @@index([isFeatured])
+}
+
+model ProfileSkill {
+  id         String   @id @default(cuid())
+  profileId  String
+  profile    Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  skill      String
+  createdAt  DateTime @default(now())
+
+  @@unique([profileId, skill])
 }
 
 model Credit {
-  id          String  @id @default(cuid())
+  id          String   @id @default(cuid())
   profileId   String
-  profile     Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
-
+  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
   title       String
   role        String
   year        Int?
-  type        String?   // "Feature", "Short", "TV", "Web Series"
+  type        String?  // Film, TV, Theatre, etc.
   director    String?
-  url         String?   // IMDb or trailer link
-  featured    Boolean  @default(false)
-  sortOrder   Int      @default(0)
+  notes       String?
+  createdAt   DateTime @default(now())
 
-  createdAt DateTime @default(now())
-
-  @@map("credits")
+  @@index([profileId])
 }
 
 model PortfolioItem {
-  id          String  @id @default(cuid())
+  id          String   @id @default(cuid())
   profileId   String
-  profile     Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
-
+  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
   title       String
   description String?
-  mediaUrl    String   // Image or video URL
-  mediaType   String   // "image" | "video"
+  mediaUrl    String
+  mediaType   String   // image | video | pdf
   sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
 
-  createdAt DateTime @default(now())
-
-  @@map("portfolio_items")
+  @@index([profileId])
 }
+
+// ─────────────────────────────────────────
+// FOLLOWS
+// ─────────────────────────────────────────
 
 model Follow {
   id          String   @id @default(cuid())
   followerId  String
+  follower    User     @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
   followingId String
-  follower    User     @relation("Follower",  fields: [followerId],  references: [id], onDelete: Cascade)
   following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
 
   @@unique([followerId, followingId])
-  @@map("follows")
+  @@index([followingId])
+}
+
+// ─────────────────────────────────────────
+// PROJECTS
+// ─────────────────────────────────────────
+
+model Project {
+  id            String           @id @default(cuid())
+  posterId      String
+  poster        User             @relation("ProjectPoster", fields: [posterId], references: [id])
+
+  title         String
+  description   String
+  projectType   ProjectType
+  genre         String?
+  status        ProjectStatus    @default(DRAFT)
+  isFeatured    Boolean          @default(false)
+
+  // Location & Schedule
+  location      String?
+  city          String?
+  state         String?
+  isRemote      Boolean          @default(false)
+  shootStartDate DateTime?
+  shootEndDate   DateTime?
+  auditionDate   DateTime?
+  auditionInstructions String?
+
+  // Metadata
+  posterUrl     String?
+  website       String?
+  tags          String[]         // PostgreSQL array
+
+  viewCount     Int              @default(0)
+  applicationCount Int           @default(0)
+
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  publishedAt   DateTime?
+
+  // Relations
+  roles         Role[]
+  applications  Application[]
+
+  @@index([status, publishedAt])
+  @@index([projectType])
+  @@index([posterId])
+  @@index([isFeatured])
+}
+
+// ─────────────────────────────────────────
+// ROLES
+// ─────────────────────────────────────────
+
+model Role {
+  id              String            @id @default(cuid())
+  projectId       String
+  project         Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  title           String            // "Lead Actor", "DP", "Sound Mixer"
+  profession      Profession
+  description     String?
+  compensation    CompensationType
+  compensationDetails String?       // "SAG low-budget", "$200/day", etc.
+  ageRange        String?           // "18–25"
+  gender          String?
+  ethnicity       String?           // stored openly for casting notes
+  isFilled        Boolean           @default(false)
+
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  // Relations
+  applications    Application[]
+
+  @@index([projectId])
+  @@index([profession, isFilled])
+}
+
+// ─────────────────────────────────────────
+// APPLICATIONS
+// ─────────────────────────────────────────
+
+model Application {
+  id              String            @id @default(cuid())
+  applicantId     String
+  applicant       User              @relation(fields: [applicantId], references: [id])
+  projectId       String
+  project         Project           @relation(fields: [projectId], references: [id])
+  roleId          String
+  role            Role              @relation(fields: [roleId], references: [id])
+
+  status          ApplicationStatus @default(SUBMITTED)
+  coverLetter     String?
+  auditionTapeUrl String?           // CDN path to video upload
+  additionalLinks String[]
+
+  producerNotes   String?           // Internal notes, not visible to applicant
+  reviewedAt      DateTime?
+  reviewedBy      String?           // Admin/producer user id
+
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@unique([applicantId, roleId])   // one application per role
+  @@index([projectId, status])
+  @@index([applicantId])
+  @@index([roleId])
+}
+
+// ─────────────────────────────────────────
+// EVENTS
+// ─────────────────────────────────────────
+
+model Event {
+  id              String       @id @default(cuid())
+  title           String
+  description     String
+  eventType       EventType
+  status          EventStatus  @default(DRAFT)
+
+  // Location
+  venue           String?
+  address         String?
+  city            String?
+  state           String?
+  isVirtual       Boolean      @default(false)
+  virtualUrl      String?
+
+  // Schedule
+  startDate       DateTime
+  endDate         DateTime?
+  doorsOpen       DateTime?
+
+  // Ticketing
+  isFree          Boolean      @default(true)
+  ticketPrice     Decimal?     @db.Decimal(10,2)
+  ticketUrl       String?      // external ticketing link (optional)
+  capacity        Int?
+  registeredCount Int          @default(0)
+
+  // Media
+  coverImageUrl   String?
+  tags            String[]
+
+  // Authorship
+  createdById     String
+  isFeatured      Boolean      @default(false)
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  publishedAt     DateTime?
+
+  // Relations
+  attendees       EventAttendee[]
+
+  @@index([status, startDate])
+  @@index([eventType])
+  @@index([isFeatured])
+}
+
+model EventAttendee {
+  id          String    @id @default(cuid())
+  eventId     String
+  event       Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+
+  ticketRef   String?   // confirmation number
+  checkedIn   Boolean   @default(false)
+  checkedInAt DateTime?
+
+  createdAt   DateTime  @default(now())
+
+  @@unique([eventId, userId])
+  @@index([eventId])
+  @@index([userId])
+}
+
+// ─────────────────────────────────────────
+// ARTICLES
+// ─────────────────────────────────────────
+
+model Article {
+  id            String        @id @default(cuid())
+  authorId      String
+  author        User          @relation(fields: [authorId], references: [id])
+
+  title         String
+  slug          String        @unique
+  summary       String?
+  body          String        // HTML or Markdown
+  coverImageUrl String?
+  status        ArticleStatus @default(DRAFT)
+
+  // Taxonomy
+  category      String?       // "News", "Interviews", "Festival Coverage"
+  tags          String[]
+  isSponsored   Boolean       @default(false)
+  sponsorName   String?
+
+  viewCount     Int           @default(0)
+  isFeatured    Boolean       @default(false)
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  publishedAt   DateTime?
+
+  @@index([status, publishedAt])
+  @@index([slug])
+  @@index([category])
+  @@index([isFeatured])
+}
+
+// ─────────────────────────────────────────
+// ACTING CLASSES
+// ─────────────────────────────────────────
+
+model ActingClass {
+  id              String        @id @default(cuid())
+  title           String
+  instructor      String
+  school          String?
+  description     String?
+  website         String?
+
+  // Schedule
+  schedule        String?       // "Tuesdays 7–9pm"
+  isOnline        Boolean       @default(false)
+  location        String?
+  city            String?
+  state           String?
+
+  // Pricing
+  price           Decimal?      @db.Decimal(10,2)
+  priceDescription String?      // "per 6-week session"
+
+  isActive        Boolean       @default(true)
+  isFeatured      Boolean       @default(false)
+  isVerifiedPartner Boolean     @default(false)
+
+  avgRating       Decimal?      @db.Decimal(3,2)
+  reviewCount     Int           @default(0)
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  reviews         ClassReview[]
+
+  @@index([isActive, isFeatured])
+  @@index([city])
+}
+
+model ClassReview {
+  id          String      @id @default(cuid())
+  classId     String
+  class       ActingClass @relation(fields: [classId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+
+  rating      Int         // 1–5
+  body        String?
+  isVerified  Boolean     @default(false) // verified attendee
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@unique([classId, userId])
+  @@index([classId])
+}
+
+// ─────────────────────────────────────────
+// NOTIFICATIONS
+// ─────────────────────────────────────────
+
+model Notification {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type        String    // "new_project" | "application_update" | "new_follower" | "event_reminder"
+  title       String
+  body        String?
+  linkUrl     String?
+  isRead      Boolean   @default(false)
+
+  createdAt   DateTime  @default(now())
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+}
+
+// ─────────────────────────────────────────
+// ADMIN LOG
+// ─────────────────────────────────────────
+
+model AdminLog {
+  id          String    @id @default(cuid())
+  adminId     String
+  admin       User      @relation(fields: [adminId], references: [id])
+
+  action      String    // "approve_user" | "reject_user" | "remove_project" | etc.
+  targetType  String    // "User" | "Project" | "Article"
+  targetId    String
+  notes       String?
+
+  createdAt   DateTime  @default(now())
+
+  @@index([adminId])
+  @@index([targetType, targetId])
 }
