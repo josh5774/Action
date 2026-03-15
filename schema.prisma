@@ -1,0 +1,159 @@
+// FilmLink - Prisma Database Schema (Auth + Profiles)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserType {
+  CREATIVE
+  FAN
+  ADMIN
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  REJECTED
+}
+
+enum Profession {
+  ACTOR
+  DIRECTOR
+  WRITER
+  PRODUCER
+  CINEMATOGRAPHER
+  EDITOR
+  COMPOSER
+  PRODUCTION_DESIGNER
+  COSTUME_DESIGNER
+  SOUND_DESIGNER
+  OTHER
+}
+
+model User {
+  id            String     @id @default(cuid())
+  email         String     @unique
+  passwordHash  String
+  userType      UserType   @default(FAN)
+  status        UserStatus @default(ACTIVE)
+  firstName     String?
+  lastName      String?
+
+  emailVerified     Boolean   @default(false)
+  emailVerifyToken  String?   @unique
+  emailVerifyExpiry DateTime?
+  resetToken        String?   @unique
+  resetTokenExpiry  DateTime?
+
+  refreshTokens RefreshToken[]
+  profile       Profile?
+
+  // Follow graph
+  following     Follow[]  @relation("Follower")
+  followers     Follow[]  @relation("Following")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  userAgent String?
+  ipAddress String?
+
+  @@map("refresh_tokens")
+}
+
+model Profile {
+  id         String  @id @default(cuid())
+  userId     String  @unique
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Display
+  displayName  String?
+  headshot     String?   // S3/CDN URL
+  bio          String?   @db.Text
+
+  // Creative-specific
+  profession   Profession?
+  location     String?
+  reelUrl      String?   // Hosted video URL
+  resumeUrl    String?   // PDF URL
+  website      String?
+
+  // Social links (stored as JSON for flexibility)
+  socialLinks  Json?     // { imdb, instagram, twitter, linkedin, vimeo }
+
+  // Skills + credits (arrays via Postgres)
+  skills       String[]
+  credits      Credit[]
+  portfolioItems PortfolioItem[]
+
+  // Visibility
+  isPublic     Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("profiles")
+}
+
+model Credit {
+  id          String  @id @default(cuid())
+  profileId   String
+  profile     Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  title       String
+  role        String
+  year        Int?
+  type        String?   // "Feature", "Short", "TV", "Web Series"
+  director    String?
+  url         String?   // IMDb or trailer link
+  featured    Boolean  @default(false)
+  sortOrder   Int      @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@map("credits")
+}
+
+model PortfolioItem {
+  id          String  @id @default(cuid())
+  profileId   String
+  profile     Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+  mediaUrl    String   // Image or video URL
+  mediaType   String   // "image" | "video"
+  sortOrder   Int      @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@map("portfolio_items")
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  follower    User     @relation("Follower",  fields: [followerId],  references: [id], onDelete: Cascade)
+  following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
+  @@map("follows")
+}
