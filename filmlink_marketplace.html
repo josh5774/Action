@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FilmLink — Project Marketplace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --film-gold: #C9A84C;
+    --film-dark: #1A1612;
+    --bg-primary: #FFFFFF;
+    --bg-secondary: #F5F4F2;
+    --bg-tertiary: #EDECE9;
+    --text-primary: #1A1612;
+    --text-secondary: #6B6560;
+    --border-light: rgba(30,26,22,0.12);
+    --border-mid: rgba(30,26,22,0.22);
+    --border-strong: rgba(30,26,22,0.38);
+    --success-bg: #EDFAF0;
+    --success-text: #1A6B35;
+    --info-bg: #EAF1FF;
+    --info-text: #1A45A0;
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --font: 'DM Sans', system-ui, sans-serif;
+    --font-display: 'DM Serif Display', Georgia, serif;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.12);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg-primary: #1E1B17;
+      --bg-secondary: #272320;
+      --bg-tertiary: #302C28;
+      --text-primary: #F0EBE3;
+      --text-secondary: #9C9080;
+      --border-light: rgba(240,235,227,0.1);
+      --border-mid: rgba(240,235,227,0.18);
+      --border-strong: rgba(240,235,227,0.32);
+      --success-bg: #0F2A1A;
+      --success-text: #5DC987;
+      --info-bg: #0F1E3A;
+      --info-text: #6B9AE0;
+    }
+  }
+
+  html, body {
+    font-family: var(--font);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  /* App shell */
+  .app { max-width: 1100px; margin: 0 auto; padding: 24px 16px 60px; }
+
+  /* Header */
+  .header {
+    background: var(--bg-primary);
+    border: 0.5px solid var(--border-light);
+    border-radius: var(--radius-xl);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow-sm);
+  }
+  .logo {
+    font-family: var(--font-display);
+    font-size: 22px;
+    color: var(--text-primary);
+    text-decoration: none;
+  }
+  .logo em { color: var(--film-gold); font-style: italic; }
+  .logo-sub { font-family: var(--font); font-size: 11px; font-weight: 400; color: var(--text-secondary); letter-spacing: 0.1em; text-transform: uppercase; margin-left: 12px; }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .btn-primary {
+    background: var(--film-dark);
+    color: #F5F0E8;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 9px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: var(--font);
+    display: flex; align-items: center; gap: 6px;
+    transition: opacity 0.15s;
+  }
+  .btn-primary:hover { opacity: 0.82; }
+
+  /* Nav */
+  .nav-bar {
+    background: var(--bg-primary);
+    border: 0.5px solid var(--border-light);
+    border-radius: var(--radius-xl);
+    padding: 4px 8px;
+    display: flex;
+    gap: 2px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-sm);
+    overflow-x: auto;
+  }
+  .nav-tab {
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text-secondary);
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-radius: var(--radius-md);
+    font-family: var(--font);
+    white-space: nowrap;
+    transition: all 0.15s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .nav-tab:hover { background: var(--bg-secondary); color: var(--text-primary); }
+  .nav-tab.active { background: var(--bg-secondary); color: var(--text-primary); font-weight: 500; }
+  .tab-badge {
+    font-size: 11px;
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    padding: 1px 6px;
+    border-radius: 999px;
+  }
+  .nav-tab.active .tab-badge { background: var(--bg-primary); }
+
+  /* Layout */
+  .body-layout { display: flex; gap: 16px; align-items: flex-start; }
+
+  /* Sidebar */
+  .sidebar {
+    width: 210px;
+    flex-shrink: 0;
+    background: var(--bg-primary);
+    border: 0.5px solid var(--border-light);
+    border-radius: var(--radius-xl);
+    padding: 20px 14px;
+    box-shadow: var(--shadow-sm);
+    position: sticky;
+    top: 24px;
+  }
+  .sidebar-title {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    padding: 0 6px;
+    margin-bottom: 10px;
+    margin-top: 2px;
+  }
+  .sidebar-title:not(:first-child) { margin-top: 18px; }
+  .filter-sep { height: 0.5px; background: var(--border-light); margin: 14px 0; }
+  .filter-opt {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-secondary);
+    transition: all 0.1s;
+    border: none; background: none;
+    font-family: var(--font);
+    text-align: left;
+    width: 100%;
+  }
+  .filter-opt:hover { background: var(--bg-secondary); color: var(--text-primary); }
+  .filter-opt.active { background: var(--bg-secondary); color: var(--text-primary); font-weight: 500; }
+  .filter-count {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+  .clear-filters {
+    margin-top: 14px;
+    width: 100%;
+    padding: 7px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: none;
+    border: 0.5px solid var(--border-mid);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-family: var(--font);
+    transition: all 0.15s;
+  }
+  .clear-filters:hover { background: var(--bg-secondary); color: var(--text-primary); }
+
+  /* Main */
+  .main { flex: 1; min-width: 0; }
+
+  .search-row { display: flex; gap: 8px; margin-bottom: 12px; }
+  .search-wrap { flex: 1; position: relative; }
+  .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-size: 15px; pointer-events: none; }
+  .search-input {
+    width: 100%;
+    padding: 9px 12px 9px 36px;
+    font-size: 13px;
+    border: 0.5px solid var(--border-mid);
+    border-radius: var(--radius-md);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--font);
+    box-shadow: var(--shadow-sm);
+    transition: border-color 0.15s;
+  }
+  .search-input:focus { outline: none; border-color: var(--border-strong); }
+  .sort-select {
+    padding: 9px 12px;
+    font-size: 13px;
+    border: 0.5px solid var(--border-mid);
+    border-radius: var(--radius-md);
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    font-family: var(--font);
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* Results meta */
+  .results-meta {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .active-filters { display: flex; gap: 6px; flex-wrap: wrap; }
+  .filter-chip {
+    display: flex; align-items: center; gap: 4px;
+    padding: 3px 10px 3px 10px;
+    background: var(--bg-secondary);
+    border: 0.5px solid var(--border-mid);
+    border-radius: 999px;
+    font-size: 12px;
+    color: var(--text-primary);
+  }
+  .chip-x {
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 14px;
+    background: none;
+    border: none;
+    font-family: var(--font);
+    padding: 0 0 0 2px;
+    line-height: 1;
+    transition: color 0.12s;
+  }
+  .chip-x:hover { color: var(--text-primary); }
+
+  /* Grid */
+  .projects-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  @media (max-width: 720px) {
+    .projects-grid { grid-template-columns: 1fr; }
+    .body-layout { flex-direction: column; }
+    .sidebar { width: 100%; position: static; }
+  }
+
+  /* Project card */
+  .project-card {
+    background: var(--bg-primary);
+    border: 0.5px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+    position: relative;
+    box-shadow: var(--shadow-sm);
+  }
+  .project-card:hover {
+    border-color: var(--border-mid);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+  .card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
+  .card-genre {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 999px;
+  }
+  .genre-Drama { background: #EEE8FF; color: #4A35A5; }
+  .genre-Thriller { background: #FFE8E8; color: #A53535; }
+  .genre-Comedy { background: #E8F5E8; color: #2A7A2A; }
+  .genre-Sci-Fi { background: #E8F0FF; color: #2450A0; }
+  .genre-Horror { background: #F5E8FF; color: #6B3090; }
+  .genre-Documentary { background: #FFF3E8; color: #904520; }
+  .genre-Music\ Video { background: #E8F5F5; color: #1A6B6B; }
+  @media (prefers-color-scheme: dark) {
+    .genre-Drama { background: #2A2050; color: #B09AE0; }
+    .genre-Thriller { background: #3A1A1A; color: #E09090; }
+    .genre-Comedy { background: #1A3A1A; color: #80C880; }
+    .genre-Sci-Fi { background: #1A2A50; color: #7090D0; }
+    .genre-Horror { background: #2A1A40; color: #C090E0; }
+    .genre-Documentary { background: #3A2A1A; color: #C09060; }
+    .genre-Music\ Video { background: #1A3535; color: #60B8B8; }
+  }
+  .card-save-btn {
+    background: none; border: none; cursor: pointer;
+    font-size: 18px; color: var(--text-secondary);
+    padding: 0; transition: color 0.15s; line-height: 1;
+  }
+  .card-save-btn:hover { color: var(--film-gold); }
+  .card-save-btn.saved { color: var(--film-gold); }
+  .card-title { font-size: 15px; font-weight: 500; margin-bottom: 3px; color: var(--text-primary); line-height: 1.35; }
+  .card-subline { font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; }
+  .card-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 10px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .card-roles { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+  .role-tag {
+    font-size: 11px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    border: 0.5px solid var(--border-mid);
+    color: var(--text-secondary);
+    background: transparent;
+  }
+  .role-tag.primary {
+    border-color: var(--info-text);
+    color: var(--info-text);
+    background: var(--info-bg);
+  }
+  .card-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    padding-top: 10px;
+    border-top: 0.5px solid var(--border-light);
+    flex-wrap: wrap;
+  }
+  .badge-paid { background: var(--success-bg); color: var(--success-text); padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 500; }
+  .badge-deferred { background: var(--bg-secondary); color: var(--text-secondary); padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 500; }
+  .card-deadline { margin-left: auto; font-size: 11px; color: var(--text-secondary); }
+  .new-badge {
+    position: absolute;
+    top: -7px; right: 14px;
+    font-size: 10px; font-weight: 600;
+    letter-spacing: 0.05em;
+    background: var(--film-dark); color: #F5F0E8;
+    padding: 2px 9px; border-radius: 999px;
+  }
+  .applied-badge {
+    position: absolute;
+    top: -7px; left: 14px;
+    font-size: 10px; font-weight: 600;
+    letter-spacing: 0.05em;
+    background: var(--success-bg); color: var(--success-text);
+    padding: 2px 9px; border-radius: 999px;
+    border: 0.5px solid var(--success-text);
+  }
+
+  /* Empty state */
+  .empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-secondary);
+  }
+  .empty-icon { font-size: 40px; margin-bottom: 14px; opacity: 0.35; }
+  .empty-title { font-size: 16px; font-weight: 500; color: var(--text-primary); margin-bottom: 6px; }
+  .empty-sub { font-size: 13px; }
+
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.52);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    backdrop-filter: blur(2px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--bg-primary);
+    border-radius: var(--radius-xl);
+    width: 100%;
+    max-width: 560px;
+    max-height: 90vh;
+    overflow-y: auto;
+    border: 0.5px solid var(--border-mid);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .modal-head {
+    padding: 20px 24px 16px;
+    border-bottom: 0.5px solid var(--border-light);
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0;
+    background: var(--bg-primary);
+    z-index: 1;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  }
+  .modal-title { font-size: 16px; font-weight: 500; }
+  .modal-close {
+    background: none; border: none; cursor: pointer;
+    font-size: 22px; color: var(--text-secondary);
+    font-family: var(--font); padding: 0; line-height: 1;
+    width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; transition: all 0.15s;
+  }
+  .modal-close:hover { background: var(--bg-secondary); color: var(--text-primary); }
+  .modal-body { padding: 22px 24px 28px; }
+
+  /* Form */
+  .form-group { margin-bottom: 16px; }
+  .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .form-label { display: block; font-size: 11px; font-weight: 600; color: var(--text-secondary); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.07em; }
+  .form-input, .form-select, .form-textarea {
+    width: 100%; padding: 9px 12px;
+    font-size: 13px;
+    border: 0.5px solid var(--border-mid);
+    border-radius: var(--radius-md);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--font);
+    transition: border-color 0.15s;
+  }
+  .form-textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--border-strong); }
+  .roles-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .role-pill {
+    padding: 5px 13px; border-radius: 999px;
+    border: 0.5px solid var(--border-mid);
+    font-size: 12px; cursor: pointer;
+    color: var(--text-secondary); background: none;
+    font-family: var(--font); transition: all 0.12s;
+  }
+  .role-pill:hover { border-color: var(--border-strong); color: var(--text-primary); }
+  .role-pill.selected { border-color: var(--text-primary); color: var(--text-primary); background: var(--bg-secondary); font-weight: 500; }
+  .form-actions { display: flex; gap: 8px; justify-content: flex-end; padding-top: 18px; border-top: 0.5px solid var(--border-light); margin-top: 22px; }
+  .btn-cancel {
+    padding: 9px 18px; border: 0.5px solid var(--border-mid); border-radius: var(--radius-md);
+    background: none; font-size: 13px; font-weight: 500; cursor: pointer;
+    color: var(--text-secondary); font-family: var(--font); transition: all 0.15s;
+  }
+  .btn-cancel:hover { background: var(--bg-secondary); color: var(--text-primary); }
+  .form-hint { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
+
+  /* Detail modal */
+  .detail-genre-row { margin-bottom: 10px; }
+  .detail-title { font-size: 22px; font-weight: 500; margin: 6px 0 4px; line-height: 1.25; }
+  .detail-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 14px; }
+  .detail-roles { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 18px; }
+  .section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px; }
+  .detail-desc-text { font-size: 14px; line-height: 1.65; color: var(--text-primary); margin-bottom: 18px; }
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+  .detail-field-label { font-size: 11px; color: var(--text-secondary); margin-bottom: 3px; }
+  .detail-field-val { font-size: 13px; font-weight: 500; }
+  .detail-audition { font-size: 13px; line-height: 1.6; color: var(--text-primary); background: var(--bg-secondary); padding: 12px 14px; border-radius: var(--radius-md); margin-bottom: 20px; }
+  .apply-btn {
+    width: 100%; padding: 13px;
+    background: var(--film-dark); color: #F5F0E8;
+    border: none; border-radius: var(--radius-lg);
+    font-size: 14px; font-weight: 500;
+    cursor: pointer; font-family: var(--font);
+    transition: opacity 0.15s; letter-spacing: 0.01em;
+  }
+  .apply-btn:hover { opacity: 0.85; }
+  .apply-btn.applied { background: var(--success-bg); color: var(--success-text); cursor: default; }
+  .apply-btn.applied:hover { opacity: 1; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 28px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--film-dark); color: #F5F0E8;
+    padding: 11px 22px; border-radius: 999px;
+    font-size: 13px; font-weight: 500; z-index: 300;
+    transition: transform 0.28s cubic-bezier(0.34,1.56,0.64,1);
+    font-family: var(--font); white-space: nowrap;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <header class="header">
+    <div style="display:flex;align-items:baseline;gap:4px">
+      <span class="logo">Film<em>Link</em></span>
+      <span class="logo-sub">Project Marketplace</span>
+    </div>
+    <div class="header-right">
+      <button class="btn-primary" onclick="openPostModal()">
+        <span style="font-size:18px;font-weight:300;line-height:1">+</span> Post a Project
+      </button>
+    </div>
+  </header>
+
+  <!-- Nav -->
+  <nav class="nav-bar">
+    <button class="nav-tab active" onclick="setTab(this,'all')">All Projects <span class="tab-badge" id="badge-all">18</span></button>
+    <button class="nav-tab" onclick="setTab(this,'applied')">Applied <span class="tab-badge" id="badge-applied">2</span></button>
+    <button class="nav-tab" onclick="setTab(this,'saved')">Saved <span class="tab-badge" id="badge-saved">2</span></button>
+    <button class="nav-tab" onclick="setTab(this,'mine')">My Posts <span class="tab-badge" id="badge-mine">0</span></button>
+  </nav>
+
+  <!-- Body -->
+  <div class="body-layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-title">Compensation</div>
+      <button class="filter-opt active" onclick="setFilter('comp','all',this)">All <span class="filter-count">18</span></button>
+      <button class="filter-opt" onclick="setFilter('comp','paid',this)">Paid <span class="filter-count">11</span></button>
+      <button class="filter-opt" onclick="setFilter('comp','unpaid',this)">Deferred / Copy <span class="filter-count">7</span></button>
+
+      <div class="filter-sep"></div>
+      <div class="sidebar-title">Role Type</div>
+      <button class="filter-opt active" onclick="setFilter('role','all',this)">All Roles</button>
+      <button class="filter-opt" onclick="setFilter('role','Actor',this)">Actor</button>
+      <button class="filter-opt" onclick="setFilter('role','Director',this)">Director</button>
+      <button class="filter-opt" onclick="setFilter('role','Cinematographer',this)">Cinematographer</button>
+      <button class="filter-opt" onclick="setFilter('role','Editor',this)">Editor</button>
+      <button class="filter-opt" onclick="setFilter('role','Writer',this)">Writer</button>
+      <button class="filter-opt" onclick="setFilter('role','Composer',this)">Composer</button>
+      <button class="filter-opt" onclick="setFilter('role','Producer',this)">Producer</button>
+
+      <div class="filter-sep"></div>
+      <div class="sidebar-title">Genre</div>
+      <button class="filter-opt active" onclick="setFilter('genre','all',this)">All Genres</button>
+      <button class="filter-opt" onclick="setFilter('genre','Drama',this)">Drama</button>
+      <button class="filter-opt" onclick="setFilter('genre','Thriller',this)">Thriller</button>
+      <button class="filter-opt" onclick="setFilter('genre','Comedy',this)">Comedy</button>
+      <button class="filter-opt" onclick="setFilter('genre','Sci-Fi',this)">Sci-Fi</button>
+      <button class="filter-opt" onclick="setFilter('genre','Horror',this)">Horror</button>
+      <button class="filter-opt" onclick="setFilter('genre','Documentary',this)">Documentary</button>
+      <button class="filter-opt" onclick="setFilter('genre','Music Video',this)">Music Video</button>
+
+      <div class="filter-sep"></div>
+      <div class="sidebar-title">Location</div>
+      <button class="filter-opt active" onclick="setFilter('loc','all',this)">Anywhere</button>
+      <button class="filter-opt" onclick="setFilter('loc','New York',this)">New York</button>
+      <button class="filter-opt" onclick="setFilter('loc','Los Angeles',this)">Los Angeles</button>
+      <button class="filter-opt" onclick="setFilter('loc','Remote',this)">Remote</button>
+      <button class="filter-opt" onclick="setFilter('loc','Atlanta',this)">Atlanta</button>
+
+      <button class="clear-filters" onclick="clearAllFilters()">Clear all filters</button>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <div class="search-row">
+        <div class="search-wrap">
+          <span class="search-icon">⌕</span>
+          <input class="search-input" type="text" id="searchInput" placeholder="Search projects, roles, genres…" oninput="doSearch(this.value)">
+        </div>
+        <select class="sort-select" onchange="doSort(this.value)">
+          <option value="newest">Newest first</option>
+          <option value="deadline">Deadline soon</option>
+          <option value="paid">Paid first</option>
+        </select>
+      </div>
+
+      <div class="results-meta">
+        <span id="resultsCount">18 projects</span>
+        <div class="active-filters" id="activeFilters"></div>
+      </div>
+
+      <div class="projects-grid" id="projectsGrid"></div>
+    </main>
+
+  </div>
+</div>
+
+<!-- Post Modal -->
+<div class="modal-overlay" id="postModal">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-title">Post a Project</span>
+      <button class="modal-close" onclick="closePostModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Project Title *</label>
+        <input class="form-input" type="text" id="f-title" placeholder="e.g. The Last Light — Short Film">
+      </div>
+      <div class="form-row-2">
+        <div>
+          <label class="form-label">Project Type</label>
+          <select class="form-select" id="f-type">
+            <option>Short Film</option>
+            <option>Feature Film</option>
+            <option>Music Video</option>
+            <option>Web Series</option>
+            <option>Student Film</option>
+            <option>Documentary</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Genre</label>
+          <select class="form-select" id="f-genre">
+            <option>Drama</option>
+            <option>Thriller</option>
+            <option>Comedy</option>
+            <option>Sci-Fi</option>
+            <option>Horror</option>
+            <option>Documentary</option>
+            <option>Music Video</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Project Description</label>
+        <textarea class="form-textarea" id="f-desc" placeholder="Describe your project, its tone, and what you're looking for..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Roles Needed *</label>
+        <div class="roles-grid" id="rolesPicker">
+          <button class="role-pill" onclick="toggleRole(this)">Actor</button>
+          <button class="role-pill" onclick="toggleRole(this)">Director</button>
+          <button class="role-pill" onclick="toggleRole(this)">Cinematographer</button>
+          <button class="role-pill" onclick="toggleRole(this)">Editor</button>
+          <button class="role-pill" onclick="toggleRole(this)">Writer</button>
+          <button class="role-pill" onclick="toggleRole(this)">Composer</button>
+          <button class="role-pill" onclick="toggleRole(this)">Producer</button>
+          <button class="role-pill" onclick="toggleRole(this)">Sound Designer</button>
+          <button class="role-pill" onclick="toggleRole(this)">Makeup Artist</button>
+          <button class="role-pill" onclick="toggleRole(this)">Gaffer</button>
+        </div>
+        <p class="form-hint">Select all that apply</p>
+      </div>
+      <div class="form-row-2">
+        <div>
+          <label class="form-label">Compensation</label>
+          <select class="form-select" id="f-comp">
+            <option value="paid">Paid</option>
+            <option value="unpaid">Deferred / Copy</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Location</label>
+          <input class="form-input" type="text" id="f-loc" placeholder="City or Remote">
+        </div>
+      </div>
+      <div class="form-row-2">
+        <div>
+          <label class="form-label">Shoot Dates</label>
+          <input class="form-input" type="text" id="f-dates" placeholder="e.g. April 2026">
+        </div>
+        <div>
+          <label class="form-label">Application Deadline</label>
+          <input class="form-input" type="date" id="f-deadline">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Audition Instructions</label>
+        <textarea class="form-textarea" id="f-audition" style="min-height:60px" placeholder="What should applicants submit? Sides, self-tape instructions, portfolio link, etc."></textarea>
+      </div>
+      <div class="form-actions">
+        <button class="btn-cancel" onclick="closePostModal()">Cancel</button>
+        <button class="btn-primary" onclick="submitPost()">Post Project →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-title">Project Details</span>
+      <button class="modal-close" onclick="closeDetail()">×</button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SEED = [
+  { id:1, title:"The Hollow Hours", type:"Short Film", genre:"Drama", desc:"A meditative exploration of grief through a series of quiet domestic moments. Two estranged siblings reunite at their childhood home after their mother's passing.", roles:["Actor","Cinematographer","Editor"], comp:"paid", loc:"New York", dates:"April 2026", deadline:"2026-03-28", deadlineLabel:"Mar 28", poster:"Mara Kolb", isNew:true, applied:false, saved:false, audition:"Submit your profile and headshot. For acting roles, include a 2-minute dramatic monologue self-tape.", mine:false },
+  { id:2, title:"Parallel", type:"Feature Film", genre:"Sci-Fi", desc:"A software engineer discovers her apartment exists in two simultaneous timelines. A psychological sci-fi thriller exploring identity and free will.", roles:["Actor","Director","Writer"], comp:"paid", loc:"Los Angeles", dates:"May–Jun 2026", deadline:"2026-04-05", deadlineLabel:"Apr 5", poster:"Dev Sharma", isNew:true, applied:false, saved:false, audition:"Send a 1-page writing sample or reel. For actors, prepare a 3-minute contemporary scene.", mine:false },
+  { id:3, title:"Neon Saints", type:"Music Video", genre:"Music Video", desc:"Visually bold music video for Brooklyn-based indie artist. Inspired by 80s neon noir aesthetic. Looking for a creative DP and editor with a strong visual voice.", roles:["Cinematographer","Editor","Director"], comp:"paid", loc:"New York", dates:"Mar 2026", deadline:"2026-03-22", deadlineLabel:"Mar 22", poster:"Lena Parks", isNew:false, applied:true, saved:false, audition:"Submit your reel and 3 examples of previous visual work. Mood board welcome.", mine:false },
+  { id:4, title:"Fault Lines", type:"Documentary", genre:"Documentary", desc:"A documentary following three young climate scientists during a record-breaking summer. Seeking a sound designer with documentary experience and a composer for original score.", roles:["Sound Designer","Composer","Editor"], comp:"paid", loc:"Remote", dates:"Summer 2026", deadline:"2026-04-10", deadlineLabel:"Apr 10", poster:"Oscar Wu", isNew:false, applied:false, saved:true, audition:"Attach portfolio and 2 examples of past documentary work. Sound designers please include sample recordings.", mine:false },
+  { id:5, title:"After the Rain", type:"Short Film", genre:"Drama", desc:"A quiet, poetic short about an undocumented immigrant working as a night-shift cleaner in a Chicago hotel. Deferred pay with international festival run planned.", roles:["Actor","Director"], comp:"unpaid", loc:"New York", dates:"April 2026", deadline:"2026-03-30", deadlineLabel:"Mar 30", poster:"Sofia Reyes", isNew:false, applied:true, saved:false, audition:"Actors: prepare a quiet, naturalistic monologue (any language). Directors: send your previous short films or a director's statement.", mine:false },
+  { id:6, title:"Dead Frequency", type:"Short Film", genre:"Horror", desc:"A small-town radio DJ begins receiving transmissions from the dead — and can't stop listening. Seeking lead actors and a practical effects makeup artist.", roles:["Actor","Makeup Artist","Gaffer"], comp:"unpaid", loc:"Atlanta", dates:"May 2026", deadline:"2026-04-08", deadlineLabel:"Apr 8", poster:"Tyler Woods", isNew:true, applied:false, saved:false, audition:"Actors: submit headshot, brief bio, and a short video introduction. Makeup artists: include portfolio of practical/special effects work.", mine:false },
+  { id:7, title:"The Algorithm", type:"Web Series", genre:"Thriller", desc:"A sharp, satirical web series about tech culture and the people shaped by it. Looking for writers with strong comedic timing and an eye for satire.", roles:["Writer","Actor","Producer"], comp:"paid", loc:"Los Angeles", dates:"Ongoing", deadline:"2026-04-15", deadlineLabel:"Apr 15", poster:"Priya Chan", isNew:false, applied:false, saved:true, audition:"Writers: submit 5-page writing sample. Actors: attach reel and comedic audition tape (2 min max).", mine:false },
+  { id:8, title:"Switchback", type:"Short Film", genre:"Comedy", desc:"A high-concept body-swap comedy about two strangers who swap identities at the worst possible moment — right before each of their most important life events.", roles:["Actor","Editor"], comp:"unpaid", loc:"Remote", dates:"Mar–Apr 2026", deadline:"2026-03-25", deadlineLabel:"Mar 25", poster:"Jake Miller", isNew:false, applied:false, saved:false, audition:"Actors: submit a comedic self-tape of approximately 90 seconds. Chemistry reads may be requested.", mine:false },
+];
+
+let projects = SEED.map(p => ({...p}));
+let state = { comp:'all', role:'all', genre:'all', loc:'all', search:'', sort:'newest', tab:'all' };
+
+function getFiltered() {
+  let list = projects.filter(p => {
+    if (state.tab === 'applied' && !p.applied) return false;
+    if (state.tab === 'saved' && !p.saved) return false;
+    if (state.tab === 'mine' && !p.mine) return false;
+    if (state.comp !== 'all' && p.comp !== state.comp) return false;
+    if (state.role !== 'all' && !p.roles.includes(state.role)) return false;
+    if (state.genre !== 'all' && p.genre !== state.genre) return false;
+    if (state.loc !== 'all' && p.loc !== state.loc) return false;
+    if (state.search) {
+      const q = state.search.toLowerCase();
+      return p.title.toLowerCase().includes(q) || p.genre.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q) || p.roles.join(' ').toLowerCase().includes(q) || p.type.toLowerCase().includes(q);
+    }
+    return true;
+  });
+  if (state.sort === 'deadline') list.sort((a,b) => a.deadline.localeCompare(b.deadline));
+  else if (state.sort === 'paid') list.sort((a,b) => (a.comp==='paid'?0:1) - (b.comp==='paid'?0:1));
+  else list.sort((a,b) => b.id - a.id);
+  return list;
+}
+
+function render() {
+  const filtered = getFiltered();
+  const grid = document.getElementById('projectsGrid');
+  document.getElementById('resultsCount').textContent = filtered.length + ' project' + (filtered.length !== 1 ? 's' : '');
+
+  // Update badges
+  document.getElementById('badge-all').textContent = projects.length;
+  document.getElementById('badge-applied').textContent = projects.filter(p=>p.applied).length;
+  document.getElementById('badge-saved').textContent = projects.filter(p=>p.saved).length;
+  document.getElementById('badge-mine').textContent = projects.filter(p=>p.mine).length;
+
+  // Active filter chips
+  const chips = document.getElementById('activeFilters');
+  chips.innerHTML = '';
+  if (state.comp !== 'all') chips.innerHTML += chip('comp', state.comp === 'paid' ? 'Paid' : 'Deferred');
+  if (state.role !== 'all') chips.innerHTML += chip('role', state.role);
+  if (state.genre !== 'all') chips.innerHTML += chip('genre', state.genre);
+  if (state.loc !== 'all') chips.innerHTML += chip('loc', state.loc);
+  if (state.search) chips.innerHTML += chip('search', '"' + state.search + '"');
+
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="empty"><div class="empty-icon">🎬</div><div class="empty-title">No projects found</div><div class="empty-sub">Try adjusting your filters or search terms.</div></div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(p => `
+    <div class="project-card" onclick="openDetail(${p.id})">
+      ${p.applied ? '<div class="applied-badge">✓ Applied</div>' : ''}
+      ${p.isNew ? '<div class="new-badge">New</div>' : ''}
+      <div class="card-top">
+        <span class="card-genre genre-${p.genre.replace(' ','\\ ')}">${p.genre}</span>
+        <button class="card-save-btn ${p.saved?'saved':''}" onclick="toggleSave(event,${p.id})" title="${p.saved?'Remove from saved':'Save project'}">${p.saved ? '★' : '☆'}</button>
+      </div>
+      <div class="card-title">${esc(p.title)}</div>
+      <div class="card-subline">${esc(p.type)} · ${esc(p.loc)}</div>
+      <div class="card-desc">${esc(p.desc)}</div>
+      <div class="card-roles">
+        ${p.roles.slice(0,3).map((r,i) => `<span class="role-tag ${i===0?'primary':''}">${esc(r)}</span>`).join('')}
+        ${p.roles.length > 3 ? `<span class="role-tag">+${p.roles.length-3} more</span>` : ''}
+      </div>
+      <div class="card-footer">
+        <span class="${p.comp==='paid'?'badge-paid':'badge-deferred'}">${p.comp==='paid'?'Paid':'Deferred'}</span>
+        <span>📅 ${esc(p.dates)}</span>
+        <span class="card-deadline">Due ${esc(p.deadlineLabel)}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function chip(key, label) {
+  return `<span class="filter-chip">${esc(label)} <button class="chip-x" onclick="removeChip('${key}')" title="Remove filter">×</button></span>`;
+}
+
+function removeChip(key) {
+  state[key] = key === 'search' ? '' : 'all';
+  if (key === 'search') document.getElementById('searchInput').value = '';
+  // reset sidebar button
+  document.querySelectorAll('.filter-opt').forEach(b => {
+    if (b.getAttribute('onclick') && b.getAttribute('onclick').includes(`'${key}'`)) {
+      b.classList.remove('active');
+      if (b.getAttribute('onclick').includes("'all'")) b.classList.add('active');
+    }
+  });
+  render();
+}
+
+function clearAllFilters() {
+  state = { ...state, comp:'all', role:'all', genre:'all', loc:'all', search:'' };
+  document.getElementById('searchInput').value = '';
+  document.querySelectorAll('.filter-opt').forEach(b => {
+    b.classList.remove('active');
+    if (b.getAttribute('onclick') && b.getAttribute('onclick').includes("'all'")) b.classList.add('active');
+  });
+  render();
+}
+
+function setFilter(type, val, btn) {
+  state[type] = val;
+  btn.closest('aside').querySelectorAll(`.filter-opt`).forEach(b => {
+    if (b.getAttribute('onclick') && b.getAttribute('onclick').startsWith(`setFilter('${type}'`)) b.classList.remove('active');
+  });
+  btn.classList.add('active');
+  render();
+}
+
+function doSearch(val) { state.search = val; render(); }
+function doSort(val) { state.sort = val; render(); }
+
+function setTab(btn, tab) {
+  state.tab = tab;
+  document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function toggleSave(e, id) {
+  e.stopPropagation();
+  const p = projects.find(x => x.id === id);
+  p.saved = !p.saved;
+  render();
+  showToast(p.saved ? '★ Project saved' : 'Removed from saved');
+}
+
+function openDetail(id) {
+  const p = projects.find(x => x.id === id);
+  const body = document.getElementById('detailBody');
+  body.innerHTML = `
+    <div class="detail-genre-row"><span class="card-genre genre-${p.genre.replace(' ','\\ ')}">${esc(p.genre)}</span></div>
+    <div class="detail-title">${esc(p.title)}</div>
+    <div class="detail-sub">${esc(p.type)} &nbsp;·&nbsp; Posted by ${esc(p.poster)} &nbsp;·&nbsp; ${esc(p.loc)}</div>
+    <div class="detail-roles">${p.roles.map(r => `<span class="role-tag">${esc(r)}</span>`).join('')}</div>
+    <div class="section-label">About This Project</div>
+    <div class="detail-desc-text">${esc(p.desc)}</div>
+    <div class="section-label">Project Details</div>
+    <div class="detail-grid">
+      <div><div class="detail-field-label">Compensation</div><div class="detail-field-val">${p.comp === 'paid' ? '✓ Paid' : 'Deferred / Copy'}</div></div>
+      <div><div class="detail-field-label">Location</div><div class="detail-field-val">${esc(p.loc)}</div></div>
+      <div><div class="detail-field-label">Shoot Dates</div><div class="detail-field-val">${esc(p.dates)}</div></div>
+      <div><div class="detail-field-label">Apply By</div><div class="detail-field-val">${esc(p.deadlineLabel)}</div></div>
+    </div>
+    <div class="section-label">How to Apply</div>
+    <div class="detail-audition">${esc(p.audition)}</div>
+    <button class="apply-btn ${p.applied?'applied':''}" onclick="${p.applied ? '' : `applyProject(${p.id})`}">
+      ${p.applied ? '✓ Application Submitted' : 'Apply for This Project →'}
+    </button>
+  `;
+  document.getElementById('detailModal').classList.add('open');
+}
+
+function applyProject(id) {
+  projects.find(x => x.id === id).applied = true;
+  closeDetail();
+  showToast('Application submitted! ✓');
+  render();
+}
+
+function closeDetail() { document.getElementById('detailModal').classList.remove('open'); }
+function openPostModal() { document.getElementById('postModal').classList.add('open'); }
+function closePostModal() { document.getElementById('postModal').classList.remove('open'); }
+function toggleRole(btn) { btn.classList.toggle('selected'); }
+
+function submitPost() {
+  const title = document.getElementById('f-title').value.trim();
+  if (!title) { showToast('Please enter a project title'); return; }
+  const roles = [...document.querySelectorAll('#rolesPicker .role-pill.selected')].map(b => b.textContent);
+  if (!roles.length) { showToast('Select at least one role'); return; }
+  const p = {
+    id: Date.now(),
+    title,
+    type: document.getElementById('f-type').value,
+    genre: document.getElementById('f-genre').value,
+    desc: document.getElementById('f-desc').value || 'No description provided.',
+    roles,
+    comp: document.getElementById('f-comp').value,
+    loc: document.getElementById('f-loc').value || 'TBD',
+    dates: document.getElementById('f-dates').value || 'TBD',
+    deadline: document.getElementById('f-deadline').value || '9999-12-31',
+    deadlineLabel: document.getElementById('f-deadline').value ? new Date(document.getElementById('f-deadline').value+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}) : 'Open',
+    poster: 'You',
+    audition: document.getElementById('f-audition').value || 'Submit your profile and relevant work samples.',
+    isNew: true, applied: false, saved: false, mine: true
+  };
+  projects.unshift(p);
+  // reset form
+  ['f-title','f-desc','f-loc','f-dates','f-deadline','f-audition'].forEach(id => document.getElementById(id).value = '');
+  document.querySelectorAll('#rolesPicker .role-pill').forEach(b => b.classList.remove('selected'));
+  closePostModal();
+  state.tab = 'all';
+  document.querySelectorAll('.nav-tab').forEach((b,i) => b.classList.toggle('active', i===0));
+  render();
+  showToast('Project posted! ✓');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+document.getElementById('postModal').addEventListener('click', e => { if(e.target===e.currentTarget) closePostModal(); });
+document.getElementById('detailModal').addEventListener('click', e => { if(e.target===e.currentTarget) closeDetail(); });
+
+render();
+</script>
+</body>
+</html>
