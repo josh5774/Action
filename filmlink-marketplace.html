@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FilmLink — Project Marketplace</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f4f0;
+    --bg-tertiary: #f0efe9;
+    --text-primary: #1a1a18;
+    --text-secondary: #6b6b66;
+    --border-light: rgba(0,0,0,0.1);
+    --border-mid: rgba(0,0,0,0.18);
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --accent: #D85A30;
+    --accent-hover: #993C1D;
+    --accent-light: #FAECE7;
+    --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+  body { font-family: var(--font); color: var(--text-primary); background: var(--bg-tertiary); min-height: 100vh; }
+
+  /* TOPBAR */
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; background: var(--bg-primary); border-bottom: 1px solid var(--border-light); position: sticky; top: 0; z-index: 50; }
+  .logo { font-size: 18px; font-weight: 600; letter-spacing: -0.4px; }
+  .logo span { color: var(--accent); }
+  .tabs { display: flex; gap: 2px; background: var(--bg-secondary); border-radius: var(--radius-md); padding: 3px; }
+  .tab { font-size: 13px; padding: 6px 16px; border-radius: 6px; cursor: pointer; border: none; background: transparent; color: var(--text-secondary); font-family: var(--font); transition: all 0.15s; }
+  .tab.active { background: var(--bg-primary); color: var(--text-primary); font-weight: 500; border: 1px solid var(--border-light); }
+  .btn-post { background: var(--accent); color: white; border: none; padding: 8px 18px; border-radius: var(--radius-md); font-size: 13px; font-weight: 600; cursor: pointer; font-family: var(--font); transition: background 0.15s; }
+  .btn-post:hover { background: var(--accent-hover); }
+
+  /* LAYOUT */
+  .main { display: grid; grid-template-columns: 250px minmax(0,1fr); min-height: calc(100vh - 57px); }
+
+  /* SIDEBAR */
+  .sidebar { border-right: 1px solid var(--border-light); padding: 20px 18px; background: var(--bg-primary); overflow-y: auto; }
+  .filter-section { margin-bottom: 20px; }
+  .filter-label { font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 9px; display: block; }
+  .filter-chip-group { display: flex; flex-wrap: wrap; gap: 5px; }
+  .chip { font-size: 12px; padding: 4px 11px; border-radius: 20px; border: 1px solid var(--border-light); cursor: pointer; background: transparent; color: var(--text-secondary); font-family: var(--font); transition: all 0.12s; }
+  .chip:hover { border-color: var(--border-mid); color: var(--text-primary); }
+  .chip.active { background: var(--accent-light); border-color: var(--accent); color: var(--accent-hover); font-weight: 600; }
+  .search-input { width: 100%; padding: 8px 11px; border: 1px solid var(--border-light); border-radius: var(--radius-md); font-size: 13px; font-family: var(--font); background: var(--bg-secondary); color: var(--text-primary); transition: border-color 0.15s; }
+  .search-input:focus { outline: none; border-color: var(--accent); background: var(--bg-primary); }
+  .clear-btn { font-size: 12px; color: var(--accent); cursor: pointer; background: none; border: none; font-family: var(--font); padding: 0; margin-top: 4px; display: inline-block; }
+  .clear-btn:hover { text-decoration: underline; }
+
+  /* CONTENT */
+  .content { padding: 22px 24px; }
+  .content-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+  .result-count { font-size: 13px; color: var(--text-secondary); }
+  .sort-select { font-size: 13px; padding: 6px 11px; border: 1px solid var(--border-light); border-radius: var(--radius-md); background: var(--bg-primary); color: var(--text-primary); font-family: var(--font); cursor: pointer; }
+
+  /* PROJECT GRID */
+  .project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 14px; }
+  .project-card { background: var(--bg-primary); border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: 18px; cursor: pointer; transition: border-color 0.15s, transform 0.1s, box-shadow 0.15s; }
+  .project-card:hover { border-color: var(--border-mid); transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.07); }
+  .card-badges { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 11px; }
+  .badge { font-size: 11px; padding: 3px 9px; border-radius: 20px; font-weight: 600; }
+  .badge-drama { background: #EEEDFE; color: #3C3489; }
+  .badge-comedy { background: #FAEEDA; color: #633806; }
+  .badge-thriller { background: #FCEBEB; color: #791F1F; }
+  .badge-scifi { background: #E6F1FB; color: #0C447C; }
+  .badge-documentary { background: #EAF3DE; color: #27500A; }
+  .badge-horror { background: #FBEAF0; color: #72243E; }
+  .badge-action { background: #FAECE7; color: #712B13; }
+  .badge-paid { background: #EAF3DE; color: #3B6D11; }
+  .badge-deferred { background: #FAEEDA; color: #854F0B; }
+  .badge-unpaid { background: #F1EFE8; color: #5F5E5A; }
+  .card-title { font-size: 15px; font-weight: 600; margin-bottom: 3px; line-height: 1.3; }
+  .card-type { font-size: 12px; color: var(--text-secondary); margin-bottom: 9px; }
+  .card-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.55; margin-bottom: 13px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .roles-row { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 13px; }
+  .role-pill { font-size: 11px; padding: 3px 9px; background: var(--bg-secondary); border: 1px solid var(--border-light); border-radius: 20px; color: var(--text-secondary); }
+  .card-footer { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border-light); padding-top: 11px; }
+  .card-date { font-size: 12px; color: var(--text-secondary); }
+  .apply-btn { font-size: 12px; padding: 5px 13px; border: 1px solid var(--accent); color: var(--accent); background: transparent; border-radius: var(--radius-md); cursor: pointer; font-family: var(--font); font-weight: 600; transition: background 0.12s; }
+  .apply-btn:hover { background: var(--accent-light); }
+
+  /* EMPTY STATE */
+  .empty-state { text-align: center; padding: 70px 20px; }
+  .empty-icon { font-size: 40px; margin-bottom: 14px; }
+  .empty-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+  .empty-sub { font-size: 13px; color: var(--text-secondary); }
+  .empty-sub button { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 13px; font-family: var(--font); }
+
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--bg-primary); border-radius: var(--radius-lg); border: 1px solid var(--border-light); width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; animation: slideUp 0.18s ease; }
+  @keyframes slideUp { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform: translateY(0); } }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border-light); position: sticky; top: 0; background: var(--bg-primary); z-index: 2; }
+  .modal-title { font-size: 16px; font-weight: 600; }
+  .modal-header-actions { display: flex; gap: 6px; align-items: center; }
+  .close-btn { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-secondary); line-height: 1; padding: 2px 6px; font-family: var(--font); }
+  .close-btn:hover { color: var(--text-primary); }
+  .modal-body { padding: 22px; }
+  .modal-footer { padding: 14px 22px; border-top: 1px solid var(--border-light); display: flex; justify-content: flex-end; gap: 8px; position: sticky; bottom: 0; background: var(--bg-primary); }
+
+  /* FORM */
+  .form-row { margin-bottom: 16px; }
+  .form-label { font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block; }
+  .form-input, .form-select, .form-textarea { width: 100%; padding: 9px 11px; border: 1px solid var(--border-light); border-radius: var(--radius-md); font-size: 13px; font-family: var(--font); background: var(--bg-primary); color: var(--text-primary); transition: border-color 0.15s; }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--accent); }
+  .form-textarea { min-height: 88px; resize: vertical; line-height: 1.5; }
+  .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .roles-input-row { display: flex; gap: 6px; margin-bottom: 9px; }
+  .roles-input-row .form-input { flex: 1; }
+  .add-role-btn { padding: 9px 14px; border: 1px solid var(--accent); color: var(--accent); background: transparent; border-radius: var(--radius-md); cursor: pointer; font-size: 13px; font-family: var(--font); font-weight: 600; white-space: nowrap; transition: background 0.12s; }
+  .add-role-btn:hover { background: var(--accent-light); }
+  .roles-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+  .role-tag-remove { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; padding: 4px 10px; background: var(--bg-secondary); border: 1px solid var(--border-light); border-radius: 20px; color: var(--text-secondary); }
+  .role-x { cursor: pointer; font-size: 16px; line-height: 1; color: var(--text-secondary); transition: color 0.12s; }
+  .role-x:hover { color: #E24B4A; }
+
+  /* DETAIL VIEW */
+  .detail-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .detail-section { margin-bottom: 22px; }
+  .detail-section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-secondary); margin-bottom: 9px; }
+  .detail-text { font-size: 14px; line-height: 1.65; color: var(--text-secondary); }
+  .detail-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+  .info-item-label { font-size: 11px; color: var(--text-secondary); margin-bottom: 3px; }
+  .info-item-val { font-size: 14px; font-weight: 600; }
+  .roles-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+  .role-detail-card { background: var(--bg-secondary); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 11px 13px; }
+  .role-detail-name { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+  .role-detail-spec { font-size: 12px; color: var(--text-secondary); }
+
+  /* BUTTONS */
+  .btn-cancel { background: none; border: 1px solid var(--border-light); padding: 8px 18px; border-radius: var(--radius-md); font-size: 13px; cursor: pointer; font-family: var(--font); color: var(--text-secondary); transition: border-color 0.12s; }
+  .btn-cancel:hover { border-color: var(--border-mid); color: var(--text-primary); }
+  .btn-primary { background: var(--accent); color: white; border: none; padding: 8px 18px; border-radius: var(--radius-md); font-size: 13px; font-weight: 600; cursor: pointer; font-family: var(--font); transition: background 0.15s; }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-danger { background: none; border: 1px solid #F09595; padding: 8px 14px; border-radius: var(--radius-md); font-size: 13px; cursor: pointer; font-family: var(--font); color: #A32D2D; transition: background 0.12s; }
+  .btn-danger:hover { background: #FCEBEB; }
+  .btn-edit { background: none; border: 1px solid var(--border-light); padding: 8px 14px; border-radius: var(--radius-md); font-size: 13px; cursor: pointer; font-family: var(--font); color: var(--text-secondary); transition: all 0.12s; }
+  .btn-edit:hover { border-color: var(--border-mid); color: var(--text-primary); }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(10px); background: #2C2C2A; color: white; padding: 11px 22px; border-radius: var(--radius-md); font-size: 13px; z-index: 200; opacity: 0; transition: opacity 0.2s, transform 0.2s; pointer-events: none; white-space: nowrap; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* RESPONSIVE */
+  @media (max-width: 700px) {
+    .main { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .form-grid-2 { grid-template-columns: 1fr; }
+    .roles-detail-grid { grid-template-columns: 1fr; }
+    .detail-info-grid { grid-template-columns: 1fr 1fr; }
+    .topbar { padding: 12px 16px; }
+    .logo-label { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">Film<span>Link</span></div>
+  <div class="tabs">
+    <button class="tab active">Projects</button>
+    <button class="tab" onclick="toast('Classes feature — coming in Phase 2')">Classes</button>
+    <button class="tab" onclick="toast('Events feature — coming in Phase 2')">Events</button>
+  </div>
+  <button class="btn-post" onclick="openPostModal(null)">+ Post project</button>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div class="main">
+
+  <!-- SIDEBAR FILTERS -->
+  <div class="sidebar">
+    <div class="filter-section">
+      <span class="filter-label">Search</span>
+      <input class="search-input" id="searchInput" placeholder="Title, keyword..." oninput="applyFilters()">
+    </div>
+    <div class="filter-section">
+      <span class="filter-label">Genre</span>
+      <div class="filter-chip-group" id="genreFilters"></div>
+    </div>
+    <div class="filter-section">
+      <span class="filter-label">Project type</span>
+      <div class="filter-chip-group" id="typeFilters"></div>
+    </div>
+    <div class="filter-section">
+      <span class="filter-label">Compensation</span>
+      <div class="filter-chip-group" id="payFilters"></div>
+    </div>
+    <div class="filter-section">
+      <span class="filter-label">Location</span>
+      <input class="search-input" id="locationInput" placeholder="City, state..." oninput="applyFilters()">
+    </div>
+    <button class="clear-btn" id="clearBtn" style="display:none" onclick="clearFilters()">Clear all filters</button>
+  </div>
+
+  <!-- PROJECT LISTINGS -->
+  <div class="content">
+    <div class="content-header">
+      <span class="result-count" id="resultCount">8 projects</span>
+      <select class="sort-select" id="sortSelect" onchange="applyFilters()">
+        <option value="newest">Newest first</option>
+        <option value="paid">Paid only</option>
+        <option value="az">A – Z</option>
+      </select>
+    </div>
+    <div class="project-grid" id="projectGrid"></div>
+  </div>
+</div>
+
+<!-- POST / EDIT MODAL -->
+<div class="modal-overlay" id="postModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="postModalTitle">Post a project</span>
+      <button class="close-btn" onclick="closeModal('postModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <label class="form-label">Project title *</label>
+        <input class="form-input" id="fTitle" placeholder="e.g. The Last Signal">
+      </div>
+      <div class="form-grid-2">
+        <div class="form-row">
+          <label class="form-label">Project type</label>
+          <select class="form-select" id="fType"></select>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Genre</label>
+          <select class="form-select" id="fGenre"></select>
+        </div>
+      </div>
+      <div class="form-grid-2">
+        <div class="form-row">
+          <label class="form-label">Compensation</label>
+          <select class="form-select" id="fPay">
+            <option>Unpaid</option>
+            <option>Deferred</option>
+            <option>Paid</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Location</label>
+          <input class="form-input" id="fLocation" placeholder="City, state">
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Shoot dates</label>
+        <input class="form-input" id="fDates" placeholder="e.g. Apr 10–14, 2026">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Description *</label>
+        <textarea class="form-textarea" id="fDesc" placeholder="Describe your project, tone, vision, and what you're looking for..."></textarea>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Roles available</label>
+        <div class="roles-input-row">
+          <input class="form-input" id="roleInput" placeholder="Role name (e.g. Detective Burke)" onkeydown="if(event.key==='Enter'){event.preventDefault();addRole()}">
+          <button class="add-role-btn" onclick="addRole()">+ Add role</button>
+        </div>
+        <div class="roles-tags" id="rolesTags"></div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Audition instructions</label>
+        <textarea class="form-textarea" id="fAudition" placeholder="What should applicants submit? Self-tape, in person, reel link?"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('postModal')">Cancel</button>
+      <button class="btn-primary" onclick="submitProject()">Post project</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="detailTitle">Project</span>
+      <div class="modal-header-actions">
+        <button class="btn-edit" id="detailEditBtn" onclick="editFromDetail()">Edit</button>
+        <button class="btn-danger" id="detailDeleteBtn" onclick="deleteFromDetail()">Delete</button>
+        <button class="close-btn" onclick="closeModal('detailModal')">&times;</button>
+      </div>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('detailModal')">Back to projects</button>
+      <button class="btn-primary" onclick="applyToProject()">Apply now</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toastEl"></div>
+
+<script>
+const GENRES = ["Drama","Thriller","Comedy","Sci-Fi","Documentary","Horror","Action"];
+const TYPES  = ["Short Film","Feature Film","Web Series","Music Video","Documentary","Student Film"];
+
+const GENRE_CLASS = { Drama:"drama", Thriller:"thriller", Comedy:"comedy", "Sci-Fi":"scifi", Documentary:"documentary", Horror:"horror", Action:"action" };
+const PAY_CLASS   = { Paid:"paid", Deferred:"deferred", Unpaid:"unpaid" };
+
+let projects = [
+  { id:1, title:"Hollow Meridian", type:"Feature Film", genre:"Thriller", pay:"Deferred", location:"Brooklyn, NY", dates:"Mar 2026 – Jun 2026", posted:"2 days ago", desc:"A psychological thriller following a forensic linguist who uncovers a network of forged identities hidden in plain sight across New York City.", roles:[{name:"Dr. Elara Voss",detail:"Female, 30-45, lead"},{name:"Marcus Lind",detail:"Male, 35-50, antagonist"},{name:"Det. Chen",detail:"Any, 28-40, supporting"}], audition:"Submit headshot, resume, and a 2-min self-tape reading the provided sides." },
+  { id:2, title:"Crescent & Static", type:"Short Film", genre:"Drama", pay:"Unpaid", location:"Manhattan, NY", dates:"Apr 5-9, 2026", posted:"5 days ago", desc:"Two strangers share a sleepless night in a 24-hour diner. A quiet, intimate exploration of grief and unexpected connection.", roles:[{name:"Ray",detail:"Male, 25-35, lead"},{name:"Noelle",detail:"Female, 22-32, lead"}], audition:"In-person auditions at our Midtown studio. Email for sides." },
+  { id:3, title:"Static Orbit", type:"Web Series", genre:"Sci-Fi", pay:"Paid", location:"Hoboken, NJ", dates:"May – Jul 2026", posted:"1 week ago", desc:"Six-episode near-future series: a crew aboard a research station discovers their memories of Earth are being systematically erased.", roles:[{name:"Commander Yates",detail:"Any, 35-50, series lead"},{name:"Technician Priya",detail:"Female, 24-34, recurring"},{name:"The Archivist",detail:"Any age, guest arc"}], audition:"Video audition required. Sides and breakdown available on request." },
+  { id:4, title:"Last Laugh at the Astoria", type:"Short Film", genre:"Comedy", pay:"Unpaid", location:"Queens, NY", dates:"Mar 28-30, 2026", posted:"3 days ago", desc:"A washed-up stand-up comedian must perform one final set in an empty club to settle a decades-old bet with his brother.", roles:[{name:"Eddie Marone",detail:"Male, 45-60, lead"},{name:"Young Eddie",detail:"Male, 16-22, flashbacks"},{name:"Club Owner",detail:"Any, 40-55"}], audition:"Open call this Saturday. Bring a 1-2 min comedic monologue." },
+  { id:5, title:"Soil & Signal", type:"Documentary", genre:"Documentary", pay:"Paid", location:"Remote + Travel", dates:"Flexible, 2026", posted:"2 weeks ago", desc:"A feature documentary profiling five first-generation immigrant farmers revolutionizing sustainable agriculture in the American Midwest.", roles:[{name:"On-Camera Host",detail:"Any, bilingual preferred"},{name:"Field Producer",detail:"Documentary exp. required"}], audition:"Send reel and letter of interest. No formal audition." },
+  { id:6, title:"Red Voltage", type:"Music Video", genre:"Action", pay:"Deferred", location:"Bronx, NY", dates:"Apr 12, 2026", posted:"4 days ago", desc:"High-energy action music video for an emerging hip-hop artist. Cinematic rooftop and warehouse sequences. One-day shoot.", roles:[{name:"Lead Dancer/Actor",detail:"Any, 18-30, strong physicality"},{name:"Supporting Performers",detail:"3 spots, any gender"}], audition:"Movement audition required. Send video of freestyle or reel." },
+  { id:7, title:"The Pale Interior", type:"Feature Film", genre:"Horror", pay:"Deferred", location:"Staten Island, NY", dates:"Jul – Sep 2026", posted:"1 week ago", desc:"A family moves into a house where every room reflects a different version of their future — some beautiful, some terrifying.", roles:[{name:"Sarah Vonn",detail:"Female, 30-42, mother/lead"},{name:"David Vonn",detail:"Male, 32-44, father"},{name:"Mara",detail:"Female, 8-12, daughter"}], audition:"Producer callbacks held in May. Self-tapes accepted first round." },
+  { id:8, title:"Afternoon Light", type:"Student Film", genre:"Drama", pay:"Unpaid", location:"Manhattan, NY", dates:"Mar 21-22, 2026", posted:"6 days ago", desc:"A Columbia MFA thesis film. An elderly woman revisits her childhood home one last time, guided by a stranger who may not be real.", roles:[{name:"Miriam",detail:"Female, 65-80, lead"},{name:"The Guide",detail:"Any, 30-50, ethereal quality"}], audition:"Email headshot and a brief note about your connection to the material." },
+];
+
+let activeFilters = { genre:[], type:[], pay:[] };
+let editingId = null;
+let formRoles = [];
+let detailId = null;
+
+/* ---- INIT ---- */
+function init() {
+  buildFilterChips("genreFilters", GENRES, "genre");
+  buildFilterChips("typeFilters", TYPES, "type");
+  buildFilterChips("payFilters", ["Paid","Deferred","Unpaid"], "pay");
+  GENRES.forEach(g => { const o = document.createElement("option"); o.textContent = g; document.getElementById("fGenre").appendChild(o); });
+  TYPES.forEach(t => { const o = document.createElement("option"); o.textContent = t; document.getElementById("fType").appendChild(o); });
+  renderGrid(projects);
+}
+
+function buildFilterChips(containerId, values, filterKey) {
+  const container = document.getElementById(containerId);
+  values.forEach(v => {
+    const btn = document.createElement("button");
+    btn.className = "chip";
+    btn.textContent = v;
+    btn.dataset.value = v;
+    btn.dataset.key = filterKey;
+    btn.onclick = () => toggleFilter(filterKey, v, btn);
+    container.appendChild(btn);
+  });
+}
+
+/* ---- FILTERS ---- */
+function toggleFilter(key, val, btn) {
+  const arr = activeFilters[key];
+  const idx = arr.indexOf(val);
+  if (idx >= 0) { arr.splice(idx, 1); btn.classList.remove("active"); }
+  else { arr.push(val); btn.classList.add("active"); }
+  applyFilters();
+}
+
+function applyFilters() {
+  const search = document.getElementById("searchInput").value.toLowerCase();
+  const loc = document.getElementById("locationInput").value.toLowerCase();
+  const sort = document.getElementById("sortSelect").value;
+  let results = projects.filter(p => {
+    if (search && !p.title.toLowerCase().includes(search) && !p.desc.toLowerCase().includes(search)) return false;
+    if (activeFilters.genre.length && !activeFilters.genre.includes(p.genre)) return false;
+    if (activeFilters.type.length && !activeFilters.type.includes(p.type)) return false;
+    if (activeFilters.pay.length && !activeFilters.pay.includes(p.pay)) return false;
+    if (loc && !p.location.toLowerCase().includes(loc)) return false;
+    return true;
+  });
+  if (sort === "paid") results = results.filter(p => p.pay === "Paid");
+  if (sort === "az") results.sort((a,b) => a.title.localeCompare(b.title));
+  const hasActive = activeFilters.genre.length || activeFilters.type.length || activeFilters.pay.length || search || loc;
+  document.getElementById("clearBtn").style.display = hasActive ? "inline-block" : "none";
+  renderGrid(results);
+}
+
+function clearFilters() {
+  activeFilters = { genre:[], type:[], pay:[] };
+  document.querySelectorAll(".chip.active").forEach(c => c.classList.remove("active"));
+  document.getElementById("searchInput").value = "";
+  document.getElementById("locationInput").value = "";
+  document.getElementById("clearBtn").style.display = "none";
+  renderGrid(projects);
+}
+
+/* ---- RENDER GRID ---- */
+function renderGrid(items) {
+  const grid = document.getElementById("projectGrid");
+  document.getElementById("resultCount").textContent = `${items.length} project${items.length !== 1 ? "s" : ""}`;
+  if (!items.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <div class="empty-icon">🎬</div>
+      <div class="empty-title">No projects match your filters</div>
+      <div class="empty-sub">Try adjusting your search or <button onclick="clearFilters()">clearing all filters</button></div>
+    </div>`;
+    return;
+  }
+  grid.innerHTML = items.map(p => `
+    <div class="project-card" onclick="openDetail(${p.id})">
+      <div class="card-badges">
+        <span class="badge badge-${GENRE_CLASS[p.genre] || 'drama'}">${p.genre}</span>
+        <span class="badge badge-${PAY_CLASS[p.pay] || 'unpaid'}">${p.pay}</span>
+      </div>
+      <div class="card-title">${p.title}</div>
+      <div class="card-type">${p.type} &middot; ${p.location}</div>
+      <div class="card-desc">${p.desc}</div>
+      <div class="roles-row">
+        ${p.roles.slice(0,3).map(r => `<span class="role-pill">${r.name}</span>`).join("")}
+        ${p.roles.length > 3 ? `<span class="role-pill">+${p.roles.length-3} more</span>` : ""}
+      </div>
+      <div class="card-footer">
+        <span class="card-date">${p.posted}</span>
+        <button class="apply-btn" onclick="event.stopPropagation();openDetail(${p.id})">View &amp; Apply</button>
+      </div>
+    </div>`).join("");
+}
+
+/* ---- DETAIL MODAL ---- */
+function openDetail(id) {
+  const p = projects.find(x => x.id === id);
+  if (!p) return;
+  detailId = id;
+  document.getElementById("detailTitle").textContent = p.title;
+  document.getElementById("detailBody").innerHTML = `
+    <div class="detail-badges">
+      <span class="badge badge-${GENRE_CLASS[p.genre] || 'drama'}">${p.genre}</span>
+      <span class="badge badge-${PAY_CLASS[p.pay] || 'unpaid'}">${p.pay}</span>
+      <span class="badge" style="background:var(--bg-secondary);color:var(--text-secondary)">${p.type}</span>
+    </div>
+    <div class="detail-info-grid">
+      <div><div class="info-item-label">Location</div><div class="info-item-val">${p.location}</div></div>
+      <div><div class="info-item-label">Shoot dates</div><div class="info-item-val">${p.dates || "TBD"}</div></div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-label">About the project</div>
+      <div class="detail-text">${p.desc}</div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-label">Roles available (${p.roles.length})</div>
+      <div class="roles-detail-grid">
+        ${p.roles.map(r => `<div class="role-detail-card"><div class="role-detail-name">${r.name}</div><div class="role-detail-spec">${r.detail}</div></div>`).join("")}
+      </div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-label">How to audition</div>
+      <div class="detail-text">${p.audition}</div>
+    </div>`;
+  openModal("detailModal");
+}
+
+function editFromDetail() {
+  const p = projects.find(x => x.id === detailId);
+  closeModal("detailModal");
+  openPostModal(p);
+}
+
+function deleteFromDetail() {
+  if (!confirm("Remove this project listing?")) return;
+  projects = projects.filter(p => p.id !== detailId);
+  closeModal("detailModal");
+  applyFilters();
+  toast("Project removed");
+}
+
+function applyToProject() {
+  closeModal("detailModal");
+  toast("Application submitted! The producer will be in touch.");
+}
+
+/* ---- POST / EDIT MODAL ---- */
+function openPostModal(project) {
+  editingId = project ? project.id : null;
+  formRoles = project ? [...project.roles] : [];
+  document.getElementById("postModalTitle").textContent = project ? "Edit project" : "Post a project";
+  document.getElementById("fTitle").value = project?.title || "";
+  document.getElementById("fType").value = project?.type || "Short Film";
+  document.getElementById("fGenre").value = project?.genre || "Drama";
+  document.getElementById("fPay").value = project?.pay || "Unpaid";
+  document.getElementById("fLocation").value = project?.location || "";
+  document.getElementById("fDates").value = project?.dates || "";
+  document.getElementById("fDesc").value = project?.desc || "";
+  document.getElementById("fAudition").value = project?.audition || "";
+  document.getElementById("roleInput").value = "";
+  renderRolesTags();
+  document.getElementById("postModal").querySelector(".btn-primary").textContent = project ? "Save changes" : "Post project";
+  openModal("postModal");
+}
+
+function addRole() {
+  const input = document.getElementById("roleInput");
+  const val = input.value.trim();
+  if (!val) return;
+  formRoles.push({ name: val, detail: "" });
+  input.value = "";
+  renderRolesTags();
+}
+
+function removeRole(i) {
+  formRoles.splice(i, 1);
+  renderRolesTags();
+}
+
+function renderRolesTags() {
+  document.getElementById("rolesTags").innerHTML = formRoles.map((r,i) =>
+    `<span class="role-tag-remove">${r.name}<span class="role-x" onclick="removeRole(${i})">&times;</span></span>`
+  ).join("");
+}
+
+function submitProject() {
+  const title = document.getElementById("fTitle").value.trim();
+  const desc  = document.getElementById("fDesc").value.trim();
+  if (!title) { toast("Please enter a project title"); return; }
+  if (!desc)  { toast("Please add a description"); return; }
+  const data = {
+    title, desc,
+    type:    document.getElementById("fType").value,
+    genre:   document.getElementById("fGenre").value,
+    pay:     document.getElementById("fPay").value,
+    location:document.getElementById("fLocation").value || "Location TBD",
+    dates:   document.getElementById("fDates").value || "TBD",
+    audition:document.getElementById("fAudition").value || "Contact poster for details.",
+    roles:   [...formRoles],
+    posted:  "just now",
+  };
+  if (editingId) {
+    const idx = projects.findIndex(p => p.id === editingId);
+    if (idx >= 0) projects[idx] = { ...projects[idx], ...data };
+    toast("Project updated");
+  } else {
+    projects.unshift({ id: Date.now(), ...data });
+    toast("Project posted!");
+  }
+  closeModal("postModal");
+  applyFilters();
+}
+
+/* ---- HELPERS ---- */
+function openModal(id) { document.getElementById(id).classList.add("open"); }
+function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+
+function toast(msg) {
+  const el = document.getElementById("toastEl");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove("show"), 2600);
+}
+
+// Close modals on overlay click
+document.querySelectorAll(".modal-overlay").forEach(overlay => {
+  overlay.addEventListener("click", e => { if (e.target === overlay) overlay.classList.remove("open"); });
+});
+
+init();
+</script>
+</body>
+</html>
