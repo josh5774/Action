@@ -1,930 +1,988 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>ACTION — Film Network</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
-<style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-:root {
-  --blue: #185FA5;
-  --blue-dark: #0C447A;
-  --blue-light: #E6F1FB;
-  --blue-mid: #B5D4F4;
-  --film-black: #0D0D0D;
-  --film-off: #1A1A1A;
-  --film-gray: #2C2C2A;
-  --text-dim: rgba(255,255,255,0.5);
-  --text-muted: rgba(255,255,255,0.75);
-  --text-bright: #FFFFFF;
-  --accent: #185FA5;
-  --accent-glow: rgba(24, 95, 165, 0.35);
-  --border-subtle: rgba(255,255,255,0.08);
-  --border-mid: rgba(255,255,255,0.14);
-  --serif: 'DM Serif Display', Georgia, serif;
-  --sans: 'DM Sans', system-ui, sans-serif;
-  --transition: 0.22s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-body {
-  font-family: var(--sans);
-  background: var(--film-black);
-  color: var(--text-bright);
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: stretch;
-  overflow-x: hidden;
-}
-
-/* ── PHONE SHELL ── */
-.shell {
-  width: 390px;
-  min-height: 100vh;
-  background: var(--film-black);
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-/* ── FILM GRAIN OVERLAY ── */
-.shell::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  width: 390px;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-  background-size: 200px 200px;
-  pointer-events: none;
-  z-index: 999;
-  opacity: 0.6;
-}
-
-/* ── SCREENS ── */
-.screen { display: none; flex-direction: column; flex: 1; }
-.screen.active { display: flex; }
-
-/* ══════════════════════════════════
-   LANDING SCREEN
-══════════════════════════════════ */
-#screen-landing {
-  position: relative;
-}
-
-.landing-bg {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 280px 340px at 50% 38%, rgba(24,95,165,0.18) 0%, transparent 70%),
-    linear-gradient(180deg, #0A0A0A 0%, #0D0D0D 100%);
-  z-index: 0;
-}
-
-/* Film strip decorative bars */
-.film-strip-top,
-.film-strip-bottom {
-  position: absolute;
-  left: 0; right: 0;
-  height: 28px;
-  background: var(--film-off);
-  border-bottom: 1px solid var(--border-subtle);
-  display: flex;
-  align-items: center;
-  gap: 0;
-  z-index: 2;
-  overflow: hidden;
-}
-.film-strip-top { top: 0; border-bottom: 1px solid var(--border-subtle); }
-.film-strip-bottom { bottom: 0; border-top: 1px solid var(--border-subtle); }
-
-.film-hole {
-  width: 16px;
-  height: 12px;
-  border-radius: 2px;
-  border: 1.5px solid rgba(255,255,255,0.12);
-  flex-shrink: 0;
-  margin: 0 6px;
-}
-
-.landing-content {
-  position: relative;
-  z-index: 3;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 64px 32px 80px;
-  gap: 0;
-}
-
-.landing-eyebrow {
-  font-family: var(--sans);
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--blue);
-  margin-bottom: 20px;
-  opacity: 0;
-  animation: fadeUp 0.6s 0.2s forwards;
-}
-
-.landing-wordmark {
-  font-family: var(--serif);
-  font-size: 72px;
-  line-height: 0.9;
-  letter-spacing: -0.02em;
-  color: var(--text-bright);
-  text-align: center;
-  margin-bottom: 8px;
-  opacity: 0;
-  animation: fadeUp 0.7s 0.35s forwards;
-}
-
-.landing-wordmark em {
-  font-style: italic;
-  color: var(--blue);
-}
-
-.landing-tagline {
-  font-size: 13px;
-  font-weight: 300;
-  color: var(--text-muted);
-  text-align: center;
-  line-height: 1.7;
-  max-width: 260px;
-  margin-bottom: 48px;
-  opacity: 0;
-  animation: fadeUp 0.7s 0.5s forwards;
-}
-
-/* Scene preview strip */
-.scene-strip {
-  width: 100%;
-  height: 120px;
-  border-radius: 10px;
-  border: 1px solid var(--border-mid);
-  overflow: hidden;
-  position: relative;
-  margin-bottom: 48px;
-  opacity: 0;
-  animation: fadeUp 0.7s 0.65s forwards;
-  background: var(--film-off);
-}
-
-.scene-strip-inner {
-  display: flex;
-  height: 100%;
-  animation: scrollScene 20s linear infinite;
-  width: max-content;
-}
-
-.scene-card {
-  width: 110px;
-  height: 120px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  border-right: 1px solid var(--border-subtle);
-  padding: 12px;
-}
-
-.scene-av {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 500;
-  color: white;
-  flex-shrink: 0;
-}
-
-.scene-name {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--text-bright);
-  text-align: center;
-  line-height: 1.3;
-}
-
-.scene-role {
-  font-size: 10px;
-  color: var(--text-dim);
-  text-align: center;
-}
-
-.scene-strip-fade-l,
-.scene-strip-fade-r {
-  position: absolute;
-  top: 0; bottom: 0;
-  width: 40px;
-  z-index: 2;
-  pointer-events: none;
-}
-.scene-strip-fade-l { left: 0; background: linear-gradient(to right, var(--film-off), transparent); }
-.scene-strip-fade-r { right: 0; background: linear-gradient(to left, var(--film-off), transparent); }
-
-.landing-cta-group {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  opacity: 0;
-  animation: fadeUp 0.7s 0.8s forwards;
-}
-
-.btn-primary {
-  width: 100%;
-  padding: 15px 24px;
-  background: var(--blue);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-family: var(--sans);
-  font-size: 15px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background var(--transition), transform var(--transition);
-  letter-spacing: 0.01em;
-}
-.btn-primary:hover { background: var(--blue-dark); }
-.btn-primary:active { transform: scale(0.98); }
-
-.btn-ghost {
-  width: 100%;
-  padding: 14px 24px;
-  background: transparent;
-  color: var(--text-muted);
-  border: 1px solid var(--border-mid);
-  border-radius: 12px;
-  font-family: var(--sans);
-  font-size: 15px;
-  font-weight: 400;
-  cursor: pointer;
-  transition: border-color var(--transition), color var(--transition), transform var(--transition);
-}
-.btn-ghost:hover { border-color: rgba(255,255,255,0.28); color: white; }
-.btn-ghost:active { transform: scale(0.98); }
-
-.landing-legal {
-  margin-top: 20px;
-  font-size: 11px;
-  color: var(--text-dim);
-  text-align: center;
-  line-height: 1.6;
-  opacity: 0;
-  animation: fadeUp 0.7s 0.95s forwards;
-}
-
-.landing-legal a {
-  color: var(--blue);
-  text-decoration: none;
-}
-
-/* ══════════════════════════════════
-   LOGIN SCREEN
-══════════════════════════════════ */
-#screen-login {
-  background: var(--film-black);
-}
-
-.auth-header {
-  padding: 18px 20px 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.back-btn-round {
-  width: 36px; height: 36px;
-  border-radius: 50%;
-  border: 1px solid var(--border-mid);
-  background: none;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer;
-  color: var(--text-muted);
-  transition: border-color var(--transition), color var(--transition);
-}
-.back-btn-round:hover { border-color: rgba(255,255,255,0.3); color: white; }
-
-.auth-screen-label {
-  font-size: 12px;
-  color: var(--text-dim);
-  font-weight: 400;
-}
-
-.auth-body {
-  flex: 1;
-  padding: 40px 28px 32px;
-  display: flex;
-  flex-direction: column;
-}
-
-.auth-logo {
-  font-family: var(--serif);
-  font-size: 36px;
-  color: var(--text-bright);
-  margin-bottom: 6px;
-  letter-spacing: -0.02em;
-}
-
-.auth-logo em { font-style: italic; color: var(--blue); }
-
-.auth-subtitle {
-  font-size: 14px;
-  color: var(--text-dim);
-  font-weight: 300;
-  margin-bottom: 36px;
-  line-height: 1.5;
-}
-
-.auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  margin-bottom: 24px;
-}
-
-.field-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.field-label {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-muted);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.field-input {
-  background: var(--film-off);
-  border: 1px solid var(--border-subtle);
-  border-radius: 10px;
-  padding: 14px 16px;
-  font-family: var(--sans);
-  font-size: 15px;
-  color: var(--text-bright);
-  outline: none;
-  transition: border-color var(--transition);
-  width: 100%;
-}
-
-.field-input::placeholder { color: var(--text-dim); }
-.field-input:focus { border-color: var(--blue); }
-
-.field-input-wrap {
-  position: relative;
-}
-
-.pw-toggle {
-  position: absolute;
-  right: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: var(--text-dim);
-  cursor: pointer;
-  padding: 4px;
-  font-size: 13px;
-}
-
-.forgot-link {
-  text-align: right;
-  font-size: 12px;
-  color: var(--blue);
-  cursor: pointer;
-  background: none;
-  border: none;
-  font-family: var(--sans);
-}
-.forgot-link:hover { text-decoration: underline; }
-
-.auth-error {
-  font-size: 13px;
-  color: #F09595;
-  background: rgba(240, 149, 149, 0.1);
-  border: 1px solid rgba(240,149,149,0.2);
-  border-radius: 8px;
-  padding: 10px 14px;
-  display: none;
-}
-
-.auth-error.visible { display: block; }
-
-.auth-hint {
-  font-size: 12px;
-  color: var(--text-dim);
-  text-align: center;
-  margin-bottom: 6px;
-}
-
-.auth-divider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 20px 0;
-}
-
-.auth-divider::before,
-.auth-divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--border-subtle);
-}
-
-.auth-divider span {
-  font-size: 12px;
-  color: var(--text-dim);
-  white-space: nowrap;
-}
-
-.btn-social {
-  width: 100%;
-  padding: 13px 24px;
-  background: var(--film-off);
-  color: var(--text-muted);
-  border: 1px solid var(--border-mid);
-  border-radius: 10px;
-  font-family: var(--sans);
-  font-size: 14px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  transition: border-color var(--transition), color var(--transition);
-}
-.btn-social:hover { border-color: rgba(255,255,255,0.25); color: white; }
-
-.auth-footer {
-  margin-top: auto;
-  text-align: center;
-  font-size: 13px;
-  color: var(--text-dim);
-  padding-top: 16px;
-}
-
-.auth-footer a {
-  color: var(--blue);
-  cursor: pointer;
-  text-decoration: none;
-}
-.auth-footer a:hover { text-decoration: underline; }
-
-/* ══════════════════════════════════
-   SIGNUP SCREEN
-══════════════════════════════════ */
-#screen-signup { background: var(--film-black); }
-
-/* user type selector */
-.type-cards {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 24px;
-}
-
-.type-card {
-  background: var(--film-off);
-  border: 1.5px solid var(--border-subtle);
-  border-radius: 12px;
-  padding: 16px 12px;
-  cursor: pointer;
-  transition: border-color var(--transition), background var(--transition);
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.type-card:hover { border-color: var(--border-mid); }
-.type-card.selected { border-color: var(--blue); background: rgba(24,95,165,0.1); }
-
-.type-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 2px;
-}
-
-.type-icon.creator { background: rgba(24,95,165,0.2); }
-.type-icon.fan { background: rgba(24,95,165,0.1); }
-
-.type-name {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-bright);
-}
-
-.type-desc {
-  font-size: 11px;
-  color: var(--text-dim);
-  line-height: 1.4;
-}
-
-.selected-badge {
-  width: 16px; height: 16px;
-  border-radius: 50%;
-  background: var(--blue);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  margin-left: auto;
-  margin-top: -6px;
-  margin-right: -6px;
-  align-self: flex-end;
-}
-.type-card.selected .selected-badge { display: flex; }
-
-/* ══════════════════════════════════
-   LOADING / TRANSITION SCREEN
-══════════════════════════════════ */
-#screen-loading {
-  align-items: center;
-  justify-content: center;
-  background: var(--film-black);
-}
-
-.loading-logo {
-  font-family: var(--serif);
-  font-size: 52px;
-  color: var(--text-bright);
-  letter-spacing: -0.02em;
-  animation: pulseLogo 1.4s ease-in-out infinite;
-}
-
-.loading-logo em { font-style: italic; color: var(--blue); }
-
-.loading-bar-wrap {
-  width: 120px;
-  height: 2px;
-  background: var(--border-subtle);
-  border-radius: 2px;
-  margin-top: 24px;
-  overflow: hidden;
-}
-
-.loading-bar {
-  height: 100%;
-  width: 0%;
-  background: var(--blue);
-  border-radius: 2px;
-  transition: width 0.1s linear;
-}
-
-/* ══════════════════════════════════
-   ANIMATIONS
-══════════════════════════════════ */
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes pulseLogo {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.5; }
-}
-
-@keyframes scrollScene {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-
-/* ══════════════════════════════════
-   RESPONSIVE (non-mobile screens)
-══════════════════════════════════ */
-@media (min-width: 500px) {
-  body { background: #111; align-items: center; justify-content: center; min-height: 100vh; }
-  .shell {
-    min-height: 820px;
-    height: 820px;
-    border-radius: 44px;
-    border: 1px solid rgba(255,255,255,0.1);
-    box-shadow: 0 40px 100px rgba(0,0,0,0.7);
-    overflow: hidden;
-  }
-  .shell::before { border-radius: 44px; }
-  .screen { overflow-y: auto; }
-}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FilmLink — Business Plan & Technical Requirements</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d0f;
+      --surface: #16161a;
+      --surface2: #1e1e24;
+      --border: #2a2a35;
+      --accent: #e8c04a;
+      --accent2: #c07a3a;
+      --text: #e8e6e0;
+      --muted: #8a8790;
+      --heading: #f5f2ea;
+      --tag-bg: #1e1e24;
+      --tag-border: #2a2a35;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Georgia', serif;
+      font-size: 16px;
+      line-height: 1.75;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #0d0d0f 0%, #1a1208 60%, #0d0d0f 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 60px 40px 48px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(232,192,74,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    header .label {
+      display: inline-block;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid rgba(232,192,74,0.3);
+      padding: 4px 14px;
+      border-radius: 2px;
+      margin-bottom: 24px;
+    }
+    header h1 {
+      font-family: 'Georgia', serif;
+      font-size: clamp(28px, 5vw, 52px);
+      font-weight: normal;
+      color: var(--heading);
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+      margin-bottom: 16px;
+    }
+    header h1 span { color: var(--accent); }
+    header .subtitle {
+      font-size: 15px;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    /* ── Layout ── */
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 24px 80px;
+    }
+
+    /* ── TOC ── */
+    nav.toc {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      padding: 28px 32px;
+      margin: 48px 0;
+      border-radius: 2px;
+    }
+    nav.toc h2 {
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 16px;
+      font-weight: normal;
+    }
+    nav.toc ol {
+      list-style: none;
+      counter-reset: toc;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 32px;
+    }
+    @media (max-width: 600px) { nav.toc ol { grid-template-columns: 1fr; } }
+    nav.toc li { counter-increment: toc; }
+    nav.toc a {
+      color: var(--text);
+      text-decoration: none;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: color 0.15s;
+    }
+    nav.toc a::before {
+      content: counter(toc, decimal-leading-zero);
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    nav.toc a:hover { color: var(--accent); }
+
+    /* ── Sections ── */
+    section {
+      margin-top: 64px;
+      scroll-margin-top: 24px;
+    }
+    section + section { border-top: 1px solid var(--border); padding-top: 64px; }
+
+    .section-label {
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    h2.section-title {
+      font-size: clamp(22px, 3vw, 32px);
+      font-weight: normal;
+      color: var(--heading);
+      letter-spacing: -0.01em;
+      line-height: 1.25;
+      margin-bottom: 24px;
+    }
+
+    h3.sub-title {
+      font-size: 18px;
+      font-weight: bold;
+      color: var(--heading);
+      margin: 36px 0 12px;
+      padding-left: 16px;
+      border-left: 2px solid var(--accent2);
+    }
+
+    h4.mini-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin: 24px 0 8px;
+      font-family: 'Courier New', monospace;
+    }
+
+    p { margin-bottom: 16px; color: var(--text); }
+
+    blockquote {
+      border-left: 3px solid var(--accent);
+      margin: 24px 0;
+      padding: 16px 24px;
+      background: var(--surface);
+      font-style: italic;
+      color: var(--text);
+      border-radius: 0 2px 2px 0;
+    }
+    blockquote strong { color: var(--accent); font-style: normal; }
+
+    /* ── Lists ── */
+    ul.doc-list {
+      list-style: none;
+      margin: 0 0 20px;
+      padding: 0;
+    }
+    ul.doc-list li {
+      padding: 5px 0 5px 20px;
+      position: relative;
+      color: var(--text);
+      font-size: 15px;
+    }
+    ul.doc-list li::before {
+      content: '—';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-size: 12px;
+      top: 7px;
+    }
+
+    ol.doc-list {
+      padding-left: 0;
+      list-style: none;
+      counter-reset: steps;
+      margin: 0 0 20px;
+    }
+    ol.doc-list li {
+      counter-increment: steps;
+      padding: 6px 0 6px 32px;
+      position: relative;
+      color: var(--text);
+      font-size: 15px;
+    }
+    ol.doc-list li::before {
+      content: counter(steps);
+      position: absolute;
+      left: 0;
+      width: 22px;
+      height: 22px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      color: var(--accent);
+      top: 7px;
+    }
+
+    /* ── Cards ── */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin: 24px 0;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 24px;
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: rgba(232,192,74,0.4); }
+    .card-icon {
+      font-size: 24px;
+      margin-bottom: 12px;
+      display: block;
+    }
+    .card h4 {
+      font-size: 15px;
+      font-weight: bold;
+      color: var(--heading);
+      margin-bottom: 10px;
+    }
+    .card ul { margin: 0; }
+    .card .badge {
+      display: inline-block;
+      font-family: 'Courier New', monospace;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      padding: 2px 8px;
+      border-radius: 2px;
+      margin-bottom: 12px;
+    }
+    .badge-required { background: rgba(232,192,74,0.12); color: var(--accent); border: 1px solid rgba(232,192,74,0.3); }
+    .badge-open { background: rgba(80,160,100,0.12); color: #6ec98a; border: 1px solid rgba(80,160,100,0.3); }
+
+    /* ── Phase timeline ── */
+    .phases {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin: 24px 0;
+      position: relative;
+    }
+    .phase {
+      display: flex;
+      gap: 24px;
+      padding: 28px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .phase:last-child { border-bottom: none; }
+    .phase-num {
+      flex-shrink: 0;
+      width: 48px;
+      height: 48px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      color: var(--accent);
+      font-weight: bold;
+    }
+    .phase-content h4 {
+      font-size: 16px;
+      font-weight: bold;
+      color: var(--heading);
+      margin-bottom: 10px;
+    }
+
+    /* ── Cost box ── */
+    .cost-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 32px;
+      margin: 24px 0;
+      display: flex;
+      gap: 40px;
+      flex-wrap: wrap;
+    }
+    .cost-item { flex: 1; min-width: 160px; }
+    .cost-item .label-sm {
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+      display: block;
+    }
+    .cost-item .price {
+      font-size: 28px;
+      color: var(--accent);
+      font-weight: normal;
+    }
+    .cost-item .note {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* ── Stack badge ── */
+    .stack-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 16px 0;
+    }
+    .stack-badge {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 6px 14px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    /* ── Monetization ── */
+    .mono-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin: 24px 0;
+    }
+    .mono-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 20px;
+    }
+    .mono-card h4 {
+      font-size: 14px;
+      font-weight: bold;
+      color: var(--accent);
+      margin-bottom: 10px;
+      font-family: 'Courier New', monospace;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── Advantage callout ── */
+    .advantage {
+      background: linear-gradient(135deg, rgba(232,192,74,0.05) 0%, var(--surface) 100%);
+      border: 1px solid rgba(232,192,74,0.25);
+      border-radius: 3px;
+      padding: 32px;
+      margin: 24px 0;
+    }
+    .advantage p { margin-bottom: 12px; }
+    .advantage p:last-child { margin-bottom: 0; }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 24px;
+      text-align: center;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+  </style>
 </head>
 <body>
 
-<div class="shell">
+<header>
+  <div class="label">Working Document</div>
+  <h1>Film<span>Link</span></h1>
+  <p class="subtitle">Business Plan &amp; Technical Requirements — Working Title Placeholder</p>
+</header>
 
-  <!-- ════ LANDING ════ -->
-  <div id="screen-landing" class="screen active">
-    <div class="landing-bg"></div>
+<div class="container">
 
-    <!-- top film strip -->
-    <div class="film-strip-top" id="film-top"></div>
+  <!-- TOC -->
+  <nav class="toc">
+    <h2>Contents</h2>
+    <ol>
+      <li><a href="#executive-summary">Executive Summary</a></li>
+      <li><a href="#user-types">User Types</a></li>
+      <li><a href="#core-features">Core Features</a></li>
+      <li><a href="#frontend">Front-End Requirements</a></li>
+      <li><a href="#backend">Back-End Requirements</a></li>
+      <li><a href="#admin">Admin Dashboard</a></li>
+      <li><a href="#infrastructure">Infrastructure</a></li>
+      <li><a href="#monetization">Monetization</a></li>
+      <li><a href="#phases">Development Phases</a></li>
+      <li><a href="#team">Team &amp; Cost</a></li>
+      <li><a href="#advantage">Competitive Advantage</a></li>
+    </ol>
+  </nav>
 
-    <div class="landing-content">
-      <div class="landing-eyebrow">Film Network · Est. 2025</div>
+  <!-- 1. Executive Summary -->
+  <section id="executive-summary">
+    <span class="section-label">01 — Overview</span>
+    <h2 class="section-title">Executive Summary</h2>
+    <p>This app is a <strong>community platform connecting emerging film industry creatives with opportunities, education, and networking</strong>, while also offering a <strong>consumer-facing entertainment hub for film fans.</strong></p>
 
-      <div class="landing-wordmark">
-        <em>action</em>
+    <div class="card-grid">
+      <div class="card">
+        <span class="card-icon">🎬</span>
+        <span class="badge badge-required">Application Required</span>
+        <h4>Creators</h4>
+        <p style="font-size:14px; color:var(--muted); margin-bottom:12px;">Actors, writers, filmmakers, editors, cinematographers, etc. — not yet union (SAG/industry established).</p>
+        <ul class="doc-list">
+          <li>Audition opportunities</li>
+          <li>Film collaborators</li>
+          <li>Industry education</li>
+          <li>Networking</li>
+          <li>Community exposure</li>
+        </ul>
       </div>
-
-      <p class="landing-tagline">
-        The private network for emerging film creatives — and the fans who follow them.
-      </p>
-
-      <!-- scrolling member strip -->
-      <div class="scene-strip">
-        <div class="scene-strip-fade-l"></div>
-        <div class="scene-strip-inner" id="scene-inner"></div>
-        <div class="scene-strip-fade-r"></div>
-      </div>
-
-      <div class="landing-cta-group">
-        <button class="btn-primary" onclick="goTo('signup')">Join the Network</button>
-        <button class="btn-ghost" onclick="goTo('login')">Sign in</button>
-      </div>
-
-      <p class="landing-legal">
-        By joining, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
-      </p>
-    </div>
-
-    <!-- bottom film strip -->
-    <div class="film-strip-bottom" id="film-bottom"></div>
-  </div>
-
-  <!-- ════ LOGIN ════ -->
-  <div id="screen-login" class="screen">
-    <div class="auth-header">
-      <button class="back-btn-round" onclick="goTo('landing')">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6">
-          <path d="M9 2L4 7l5 5"/>
-        </svg>
-      </button>
-      <span class="auth-screen-label">Sign in</span>
-      <div style="width:36px;"></div>
-    </div>
-
-    <div class="auth-body">
-      <div class="auth-logo"><em>action</em></div>
-      <p class="auth-subtitle">Welcome back. Your network is waiting.</p>
-
-      <div class="auth-form">
-        <div class="field-group">
-          <label class="field-label">Email</label>
-          <input class="field-input" type="email" id="login-email" placeholder="you@email.com" autocomplete="email"/>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label">Password</label>
-          <div class="field-input-wrap">
-            <input class="field-input" type="password" id="login-pw" placeholder="Your password" autocomplete="current-password" style="padding-right: 48px;"/>
-            <button class="pw-toggle" onclick="togglePw('login-pw', this)" type="button" aria-label="Toggle password">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" id="eye-icon-login"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2"/></svg>
-            </button>
-          </div>
-        </div>
-
-        <button class="forgot-link" type="button">Forgot password?</button>
-
-        <div class="auth-error" id="login-error">
-          Incorrect email or password. Please try again.
-        </div>
-      </div>
-
-      <div class="auth-hint">Demo: any email + password works</div>
-      <button class="btn-primary" onclick="attemptLogin()" style="margin-bottom: 16px;">Sign in</button>
-
-      <div class="auth-divider"><span>or continue with</span></div>
-
-      <button class="btn-social" onclick="goTo('loading')">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M15.5 8.18c0-.57-.05-1.12-.14-1.64H8v3.1h4.2a3.6 3.6 0 01-1.56 2.36v1.96h2.52c1.47-1.36 2.34-3.35 2.34-5.78z" fill="#4285F4"/>
-          <path d="M8 16c2.1 0 3.87-.7 5.16-1.88l-2.52-1.96c-.7.47-1.6.74-2.64.74-2.03 0-3.75-1.37-4.36-3.22H1.04v2.02A8 8 0 008 16z" fill="#34A853"/>
-          <path d="M3.64 9.68a4.8 4.8 0 010-3.36V4.3H1.04a8 8 0 000 7.4l2.6-2.02z" fill="#FBBC05"/>
-          <path d="M8 3.18c1.14 0 2.17.39 2.97 1.16l2.23-2.23A8 8 0 001.04 4.3l2.6 2.02C4.25 4.55 5.97 3.18 8 3.18z" fill="#EA4335"/>
-        </svg>
-        Continue with Google
-      </button>
-
-      <div class="auth-footer">
-        New to ACTION? <a onclick="goTo('signup')">Create an account</a>
+      <div class="card">
+        <span class="card-icon">🍿</span>
+        <span class="badge badge-open">Open Access</span>
+        <h4>Entertainment Fans</h4>
+        <p style="font-size:14px; color:var(--muted); margin-bottom:12px;">Users who enjoy consuming film industry content, events, and community discussions.</p>
+        <ul class="doc-list">
+          <li>Film industry news</li>
+          <li>Articles &amp; interviews</li>
+          <li>Events &amp; screenings</li>
+          <li>Community discussions</li>
+        </ul>
       </div>
     </div>
-  </div>
 
-  <!-- ════ SIGNUP ════ -->
-  <div id="screen-signup" class="screen">
-    <div class="auth-header">
-      <button class="back-btn-round" onclick="goTo('landing')">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6">
-          <path d="M9 2L4 7l5 5"/>
-        </svg>
-      </button>
-      <span class="auth-screen-label">Create account</span>
-      <div style="width:36px;"></div>
-    </div>
+    <h3 class="sub-title">Core Value Proposition</h3>
+    <blockquote>
+      <strong>For Creatives:</strong> "A private network where emerging film professionals can find collaborators, auditions, and real industry connections."
+    </blockquote>
+    <blockquote>
+      <strong>For Fans:</strong> "A curated hub for entertainment news, events, and access to the rising generation of filmmakers."
+    </blockquote>
 
-    <div class="auth-body">
-      <div class="auth-logo"><em>action</em></div>
-      <p class="auth-subtitle">Choose how you want to join.</p>
+    <h4 class="mini-title">Monetization Streams</h4>
+    <ul class="doc-list">
+      <li>Premium memberships</li>
+      <li>Acting class partnerships</li>
+      <li>Event tickets</li>
+      <li>Featured project listings</li>
+      <li>Sponsored content</li>
+    </ul>
+  </section>
 
-      <div class="type-cards">
-        <div class="type-card selected" id="type-creator" onclick="selectType('creator')">
-          <div class="selected-badge">
-            <svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="white" stroke-width="1.5"><path d="M1 4l2 2 4-4"/></svg>
-          </div>
-          <div class="type-icon creator">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#378ADD" stroke-width="1.4"><circle cx="9" cy="6" r="3"/><rect x="1" y="2" width="16" height="12" rx="1.5"/><path d="M7 9l4 2-4 2V9z"/></svg>
-          </div>
-          <div class="type-name">Creative</div>
-          <div class="type-desc">Actor, writer, director, crew</div>
-        </div>
+  <!-- 2. User Types -->
+  <section id="user-types">
+    <span class="section-label">02 — Users</span>
+    <h2 class="section-title">User Types</h2>
 
-        <div class="type-card" id="type-fan" onclick="selectType('fan')">
-          <div class="selected-badge">
-            <svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="white" stroke-width="1.5"><path d="M1 4l2 2 4-4"/></svg>
-          </div>
-          <div class="type-icon fan">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#378ADD" stroke-width="1.4"><path d="M9 2l1.8 4.6L16 7l-3.5 3.4.8 5L9 13l-4.3 2.4.8-5L2 7l5.2-.4L9 2z"/></svg>
-          </div>
-          <div class="type-name">Film Fan</div>
-          <div class="type-desc">Follow, read, attend events</div>
-        </div>
+    <div class="card-grid">
+      <div class="card">
+        <span class="badge badge-required">Application Required</span>
+        <h4>Creative Members</h4>
+        <h4 class="mini-title" style="margin-top:16px;">Examples</h4>
+        <ul class="doc-list">
+          <li>Actors</li><li>Writers</li><li>Directors</li>
+          <li>Producers</li><li>Cinematographers</li><li>Editors</li><li>Composers</li>
+        </ul>
+        <h4 class="mini-title">Capabilities</h4>
+        <ul class="doc-list">
+          <li>Apply for &amp; post projects</li>
+          <li>Attend mixers</li>
+          <li>Follow other creatives</li>
+          <li>Join acting classes</li>
+          <li>Build professional profiles</li>
+        </ul>
       </div>
-
-      <div id="creator-note" style="background:rgba(24,95,165,0.1);border:1px solid rgba(24,95,165,0.25);border-radius:10px;padding:12px 14px;margin-bottom:20px;font-size:12px;color:rgba(255,255,255,0.65);line-height:1.6;">
-        ✦ Creator accounts require admin approval after signup. We review your profile within 48 hours.
-      </div>
-
-      <div class="auth-form">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <div class="field-group">
-            <label class="field-label">First name</label>
-            <input class="field-input" type="text" placeholder="Jordan" autocomplete="given-name"/>
-          </div>
-          <div class="field-group">
-            <label class="field-label">Last name</label>
-            <input class="field-input" type="text" placeholder="Rivera" autocomplete="family-name"/>
-          </div>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label">Email</label>
-          <input class="field-input" type="email" placeholder="you@email.com" autocomplete="email"/>
-        </div>
-
-        <div class="field-group">
-          <label class="field-label">Password</label>
-          <div class="field-input-wrap">
-            <input class="field-input" type="password" id="signup-pw" placeholder="Create a password" autocomplete="new-password" style="padding-right:48px;"/>
-            <button class="pw-toggle" onclick="togglePw('signup-pw', this)" type="button" aria-label="Toggle password">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2"/></svg>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <button class="btn-primary" onclick="goTo('loading')" style="margin-bottom:14px;">
-        Create Account
-      </button>
-
-      <div class="auth-divider"><span>or</span></div>
-
-      <button class="btn-social" onclick="goTo('loading')" style="margin-bottom:20px;">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M15.5 8.18c0-.57-.05-1.12-.14-1.64H8v3.1h4.2a3.6 3.6 0 01-1.56 2.36v1.96h2.52c1.47-1.36 2.34-3.35 2.34-5.78z" fill="#4285F4"/>
-          <path d="M8 16c2.1 0 3.87-.7 5.16-1.88l-2.52-1.96c-.7.47-1.6.74-2.64.74-2.03 0-3.75-1.37-4.36-3.22H1.04v2.02A8 8 0 008 16z" fill="#34A853"/>
-          <path d="M3.64 9.68a4.8 4.8 0 010-3.36V4.3H1.04a8 8 0 000 7.4l2.6-2.02z" fill="#FBBC05"/>
-          <path d="M8 3.18c1.14 0 2.17.39 2.97 1.16l2.23-2.23A8 8 0 001.04 4.3l2.6 2.02C4.25 4.55 5.97 3.18 8 3.18z" fill="#EA4335"/>
-        </svg>
-        Continue with Google
-      </button>
-
-      <div class="auth-footer">
-        Already a member? <a onclick="goTo('login')">Sign in</a>
+      <div class="card">
+        <span class="badge badge-open">Open Access</span>
+        <h4>Fans / Industry Followers</h4>
+        <p style="font-size:14px;color:var(--muted);margin:12px 0;">No approval required.</p>
+        <h4 class="mini-title">Capabilities</h4>
+        <ul class="doc-list">
+          <li>Read articles</li>
+          <li>Attend events</li>
+          <li>Follow creators</li>
+          <li>Discover upcoming filmmakers</li>
+          <li>Engage with content</li>
+        </ul>
       </div>
     </div>
-  </div>
+  </section>
 
-  <!-- ════ LOADING ════ -->
-  <div id="screen-loading" class="screen">
-    <div class="loading-logo"><em>action</em></div>
-    <div class="loading-bar-wrap">
-      <div class="loading-bar" id="loading-bar"></div>
+  <!-- 3. Core Features -->
+  <section id="core-features">
+    <span class="section-label">03 — Features</span>
+    <h2 class="section-title">Core Features</h2>
+
+    <h3 class="sub-title">1. Creator Profiles</h3>
+    <p>Users create professional profiles with the following fields and features.</p>
+    <div class="card-grid">
+      <div class="card">
+        <h4>Profile Fields</h4>
+        <ul class="doc-list">
+          <li>Name &amp; headshot</li><li>Location</li><li>Profession</li>
+          <li>Bio &amp; reel</li><li>Resume &amp; skills</li>
+          <li>Credits &amp; portfolio</li><li>Social links</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Profile Features</h4>
+        <ul class="doc-list">
+          <li>Follow other creators</li>
+          <li>Messaging (Phase 2)</li>
+          <li>Portfolio hosting</li>
+          <li>Filmography</li>
+        </ul>
+      </div>
     </div>
-  </div>
+
+    <h3 class="sub-title">2. Project Marketplace</h3>
+    <p>Members can post and apply for projects across multiple formats.</p>
+    <div class="card-grid">
+      <div class="card">
+        <h4>Project Types</h4>
+        <ul class="doc-list">
+          <li>Short &amp; independent films</li>
+          <li>Music videos</li>
+          <li>Student films</li>
+          <li>Web series</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Listing Includes</h4>
+        <ul class="doc-list">
+          <li>Title &amp; description</li>
+          <li>Roles available</li>
+          <li>Compensation (paid/unpaid)</li>
+          <li>Location &amp; shoot dates</li>
+          <li>Audition instructions</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Actor Actions</h4>
+        <ul class="doc-list">
+          <li>Apply directly</li>
+          <li>Upload audition tapes</li>
+          <li>Submit profile</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 class="sub-title">3. Acting Classes / Education</h3>
+    <ul class="doc-list">
+      <li>Partnerships with coaches</li>
+      <li>Browse acting classes with reviews &amp; ratings</li>
+      <li>Class schedule &amp; location (in-person / online)</li>
+      <li>Possible revenue share model</li>
+    </ul>
+
+    <h3 class="sub-title">4. Social Networking</h3>
+    <p>Activity feed examples: <em>"Josh just booked a role"</em>, <em>"Sarah posted a new short film"</em>, <em>"John attended Stella Adler workshop"</em></p>
+    <ul class="doc-list">
+      <li>Follow members &amp; view activity feed</li>
+      <li>See what others are working on</li>
+      <li>Like / comment (optional)</li>
+    </ul>
+
+    <h3 class="sub-title">5. Events &amp; Mixers</h3>
+    <div class="card-grid">
+      <div class="card">
+        <h4>Event Types</h4>
+        <ul class="doc-list">
+          <li>Networking mixers</li>
+          <li>Industry speakers</li>
+          <li>Screenings &amp; panels</li>
+          <li>Workshops</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Features</h4>
+        <ul class="doc-list">
+          <li>RSVP</li>
+          <li>Ticket purchase</li>
+          <li>Event calendar</li>
+          <li>Check-in system</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 class="sub-title">6. Entertainment News (Fan Side)</h3>
+    <ul class="doc-list">
+      <li>Industry news &amp; indie film coverage</li>
+      <li>Interviews &amp; festival coverage</li>
+      <li>Behind-the-scenes stories</li>
+      <li>Trending stories &amp; categories</li>
+    </ul>
+  </section>
+
+  <!-- 4. Front-End -->
+  <section id="frontend">
+    <span class="section-label">04 — Front-End</span>
+    <h2 class="section-title">Front-End Requirements</h2>
+
+    <h4 class="mini-title">Recommended Stack</h4>
+    <div class="stack-badges">
+      <span class="stack-badge">React Native (mobile)</span>
+      <span class="stack-badge">Flutter (mobile alt)</span>
+      <span class="stack-badge">React (web)</span>
+    </div>
+
+    <h3 class="sub-title">Main Screens</h3>
+    <div class="card-grid">
+      <div class="card">
+        <h4>Landing Page</h4>
+        <ul class="doc-list">
+          <li>Login / Sign up</li>
+          <li>Choose user type</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Application Flow (Creators)</h4>
+        <ol class="doc-list">
+          <li>Create account</li>
+          <li>Upload headshot</li>
+          <li>Select profession</li>
+          <li>Submit resume/reel</li>
+          <li>Write bio</li>
+          <li>Application review</li>
+        </ol>
+        <p style="font-size:13px;color:var(--muted);margin-top:8px;">Admin approves or rejects.</p>
+      </div>
+      <div class="card">
+        <h4>Home Feed</h4>
+        <ul class="doc-list">
+          <li>Projects</li>
+          <li>Creator updates</li>
+          <li>Articles</li>
+          <li>Events</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Projects Page</h4>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:8px;">Filters:</p>
+        <ul class="doc-list">
+          <li>Role type</li>
+          <li>Location</li>
+          <li>Paid/unpaid</li>
+          <li>Genre</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Profile Page</h4>
+        <ul class="doc-list">
+          <li>Photos &amp; reel</li>
+          <li>Credits &amp; work history</li>
+          <li>Followers</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Events Page</h4>
+        <ul class="doc-list">
+          <li>Calendar view</li>
+          <li>RSVP button</li>
+          <li>Ticket purchase</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Back-End -->
+  <section id="backend">
+    <span class="section-label">05 — Back-End</span>
+    <h2 class="section-title">Back-End Requirements</h2>
+
+    <h4 class="mini-title">Recommended Stack</h4>
+    <div class="stack-badges">
+      <span class="stack-badge">Node.js</span>
+      <span class="stack-badge">PostgreSQL</span>
+      <span class="stack-badge">AWS / Google Cloud</span>
+    </div>
+
+    <h3 class="sub-title">Core Systems</h3>
+    <div class="card-grid">
+      <div class="card">
+        <h4>1. Authentication</h4>
+        <ul class="doc-list">
+          <li>Sign up / Log in</li>
+          <li>Password reset</li>
+          <li>Social login (optional)</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>2. Application Approval</h4>
+        <ul class="doc-list">
+          <li>View applications</li>
+          <li>Approve / Reject</li>
+          <li>Request additional info</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>3. User Database</h4>
+        <ul class="doc-list">
+          <li>Profiles</li>
+          <li>Followers</li>
+          <li>Activity</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>4. Project Database</h4>
+        <ul class="doc-list">
+          <li>Listings &amp; roles</li>
+          <li>Applicants</li>
+          <li>Audition tapes</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>5. Application System</h4>
+        <ul class="doc-list">
+          <li>Profile &amp; headshot</li>
+          <li>Video audition</li>
+          <li>Producer review</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>6. CMS</h4>
+        <ul class="doc-list">
+          <li>Articles &amp; news</li>
+          <li>Events</li>
+          <li>Editor publishing</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>7. Event System</h4>
+        <ul class="doc-list">
+          <li>RSVPs</li>
+          <li>Ticketing</li>
+          <li>Guest lists</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>8. Reviews &amp; Ratings</h4>
+        <ul class="doc-list">
+          <li>Ratings &amp; reviews</li>
+          <li>Member verification</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>9. Notifications</h4>
+        <ul class="doc-list">
+          <li>New projects</li>
+          <li>Application updates</li>
+          <li>Events &amp; followers</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>10. Messaging</h4>
+        <p style="font-size:13px;color:var(--muted);">Phase 2 — direct messaging between members.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Admin -->
+  <section id="admin">
+    <span class="section-label">06 — Admin</span>
+    <h2 class="section-title">Admin Dashboard</h2>
+    <p>Admins need a control panel with the following functions:</p>
+    <ul class="doc-list">
+      <li>Approve members</li>
+      <li>Remove accounts</li>
+      <li>Manage projects</li>
+      <li>Manage articles</li>
+      <li>Manage events</li>
+      <li>Moderate reviews</li>
+    </ul>
+  </section>
+
+  <!-- 7. Infrastructure -->
+  <section id="infrastructure">
+    <span class="section-label">07 — Infrastructure</span>
+    <h2 class="section-title">Infrastructure &amp; Security</h2>
+    <div class="card-grid">
+      <div class="card">
+        <h4>Hosting Options</h4>
+        <ul class="doc-list">
+          <li>AWS</li>
+          <li>Google Cloud</li>
+          <li>Vercel</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Storage</h4>
+        <ul class="doc-list">
+          <li>Video auditions</li>
+          <li>Reels</li>
+          <li>Images</li>
+          <li>CDN for fast media delivery</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Security</h4>
+        <ul class="doc-list">
+          <li>Secure authentication</li>
+          <li>Content moderation</li>
+          <li>Application review</li>
+          <li>Anti-spam</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. Monetization -->
+  <section id="monetization">
+    <span class="section-label">08 — Revenue</span>
+    <h2 class="section-title">Monetization</h2>
+    <div class="mono-grid">
+      <div class="mono-card">
+        <h4>Premium Membership</h4>
+        <ul class="doc-list">
+          <li>Unlimited applications</li>
+          <li>Featured profiles</li>
+          <li>Advanced analytics</li>
+        </ul>
+      </div>
+      <div class="mono-card">
+        <h4>Featured Listings</h4>
+        <ul class="doc-list">
+          <li>Producers pay to boost projects</li>
+        </ul>
+      </div>
+      <div class="mono-card">
+        <h4>Class Partnerships</h4>
+        <ul class="doc-list">
+          <li>Listing fee</li>
+          <li>Revenue share</li>
+        </ul>
+      </div>
+      <div class="mono-card">
+        <h4>Events</h4>
+        <ul class="doc-list">
+          <li>Ticket sales</li>
+          <li>Sponsorships</li>
+        </ul>
+      </div>
+      <div class="mono-card">
+        <h4>Sponsored Articles</h4>
+        <ul class="doc-list">
+          <li>Film brands sponsor editorial content</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9. Phases -->
+  <section id="phases">
+    <span class="section-label">09 — Roadmap</span>
+    <h2 class="section-title">Development Phases</h2>
+    <div class="phases">
+      <div class="phase">
+        <div class="phase-num">P1</div>
+        <div class="phase-content">
+          <h4>MVP — 6 Months</h4>
+          <ul class="doc-list">
+            <li>Profiles</li>
+            <li>Applications</li>
+            <li>Project listings</li>
+            <li>Articles</li>
+            <li>Events</li>
+            <li>Admin dashboard</li>
+          </ul>
+        </div>
+      </div>
+      <div class="phase">
+        <div class="phase-num">P2</div>
+        <div class="phase-content">
+          <h4>Phase 2</h4>
+          <ul class="doc-list">
+            <li>Messaging</li>
+            <li>Activity feed</li>
+            <li>Reviews</li>
+            <li>Notifications</li>
+          </ul>
+        </div>
+      </div>
+      <div class="phase">
+        <div class="phase-num">P3</div>
+        <div class="phase-content">
+          <h4>Phase 3</h4>
+          <ul class="doc-list">
+            <li>Video auditions</li>
+            <li>Advanced search</li>
+            <li>Premium memberships</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10. Team & Cost -->
+  <section id="team">
+    <span class="section-label">10 — Team &amp; Cost</span>
+    <h2 class="section-title">Team Needed &amp; Estimated Cost</h2>
+
+    <div class="cost-box">
+      <div class="cost-item">
+        <span class="label-sm">MVP Build</span>
+        <div class="price">$60k–$150k</div>
+        <div class="note">Core features only</div>
+      </div>
+      <div class="cost-item">
+        <span class="label-sm">Full Platform</span>
+        <div class="price">$200k+</div>
+        <div class="note">Depends on team</div>
+      </div>
+    </div>
+
+    <div class="card-grid">
+      <div class="card">
+        <h4>Technical Team</h4>
+        <ul class="doc-list">
+          <li>Mobile developer</li>
+          <li>Backend developer</li>
+          <li>UI/UX designer</li>
+          <li>Product manager</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Business Team</h4>
+        <ul class="doc-list">
+          <li>Partnerships manager</li>
+          <li>Content editor</li>
+          <li>Community manager</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11. Advantage -->
+  <section id="advantage">
+    <span class="section-label">11 — Positioning</span>
+    <h2 class="section-title">Biggest Competitive Advantage</h2>
+    <div class="advantage">
+      <p>The platform focuses on <strong>pre-union creatives</strong>, which currently lack a centralized network.</p>
+      <p>Existing platforms like <strong>Backstage</strong> and <strong>IMDb</strong> do parts of this, but none combine casting, networking, classes, events, and media into one ecosystem.</p>
+    </div>
+  </section>
 
 </div>
 
-<script>
-const members = [
-  { init:'MK', name:'Maya Kim', role:'DP · LA', bg:'#D85A30' },
-  { init:'AP', name:'Alex Patel', role:'Producer · NY', bg:'#0F6E56' },
-  { init:'SL', name:'Sofia Lenz', role:'Writer · Berlin', bg:'#534AB7' },
-  { init:'JR', name:'Jordan R.', role:'Director · NY', bg:'#185FA5' },
-  { init:'TW', name:'Terri Walsh', role:'Actor · Atlanta', bg:'#854F0B' },
-  { init:'CN', name:'Clara Ng', role:'Editor · SF', bg:'#993556' },
-  { init:'DM', name:'Dev Mehta', role:'Composer · LA', bg:'#0F6E56' },
-  { init:'RL', name:'Rosa Lima', role:'Cinematog. · Miami', bg:'#185FA5' },
-];
+<footer>
+  FilmLink — Business Plan &amp; Technical Requirements &nbsp;·&nbsp; Working Document
+</footer>
 
-function buildStrip() {
-  const inner = document.getElementById('scene-inner');
-  const doubled = [...members, ...members];
-  inner.innerHTML = doubled.map(m => `
-    <div class="scene-card">
-      <div class="scene-av" style="background:${m.bg}">${m.init}</div>
-      <div class="scene-name">${m.name}</div>
-      <div class="scene-role">${m.role}</div>
-    </div>
-  `).join('');
-}
-
-function buildFilmStrips() {
-  ['film-top','film-bottom'].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    for (let i = 0; i < 20; i++) {
-      const hole = document.createElement('div');
-      hole.className = 'film-hole';
-      el.appendChild(hole);
-    }
-  });
-}
-
-function goTo(screen) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('screen-' + screen).classList.add('active');
-  if (screen === 'loading') startLoading();
-}
-
-function attemptLogin() {
-  const email = document.getElementById('login-email').value.trim();
-  const pw = document.getElementById('login-pw').value;
-  const err = document.getElementById('login-error');
-
-  if (!email || !pw) {
-    err.classList.add('visible');
-    err.textContent = 'Please enter your email and password.';
-    return;
-  }
-  err.classList.remove('visible');
-  goTo('loading');
-}
-
-function startLoading() {
-  const bar = document.getElementById('loading-bar');
-  let w = 0;
-  bar.style.width = '0%';
-  const iv = setInterval(() => {
-    w += Math.random() * 14 + 6;
-    if (w >= 100) {
-      w = 100;
-      bar.style.width = '100%';
-      clearInterval(iv);
-      setTimeout(() => {
-        window.location.href = 'Action_Front_Page.html';
-      }, 300);
-    } else {
-      bar.style.width = w + '%';
-    }
-  }, 120);
-}
-
-function selectType(type) {
-  document.getElementById('type-creator').classList.toggle('selected', type === 'creator');
-  document.getElementById('type-fan').classList.toggle('selected', type === 'fan');
-  const note = document.getElementById('creator-note');
-  note.style.display = type === 'creator' ? 'block' : 'none';
-}
-
-function togglePw(inputId, btn) {
-  const input = document.getElementById(inputId);
-  const isHidden = input.type === 'password';
-  input.type = isHidden ? 'text' : 'password';
-  btn.querySelector('svg').style.opacity = isHidden ? '1' : '0.4';
-}
-
-buildStrip();
-buildFilmStrips();
-</script>
 </body>
 </html>
