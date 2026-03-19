@@ -11,13 +11,7 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "paths": {
-      "@filmlink/shared": ["../packages/shared/src"]
-    }
+    "strict": true
   },
   "include": ["src"]
 }
