@@ -421,7 +421,7 @@ function SignupModal({ onClose, defaultType }) {
         {step === 1 ? (
           <>
             <div className="modal-tag">Create your account</div>
-            <div className="modal-title">Join FilmLink</div>
+            <div className="modal-title">Join Action</div>
             <div className="modal-subtitle">
               The network built for the next generation of film professionals.
             </div>
@@ -611,7 +611,7 @@ function HomePage({ onSignup, navigate }) {
           Ready to find your next <em style={{ color: "var(--gold)" }}>collaboration?</em>
         </div>
         <p style={{ fontSize: 15, color: "var(--muted)", marginBottom: 36, maxWidth: 400, margin: "0 auto 36px" }}>
-          Join thousands of pre-union creatives who are building careers on FilmLink.
+          Join thousands of pre-union creatives who are building careers on Action.
         </p>
         <button className="btn-primary" onClick={() => onSignup("creator")}>
           Apply as a Creator
@@ -621,7 +621,7 @@ function HomePage({ onSignup, navigate }) {
       {/* Footer */}
       <footer className="footer">
         <div className="footer-logo">Film<span>Link</span></div>
-        <div className="footer-copy">© 2025 FilmLink. All rights reserved.</div>
+        <div className="footer-copy">© 2025 Action. All rights reserved.</div>
         <div style={{ display: "flex", gap: 24 }}>
           {["Privacy", "Terms", "Contact"].map((l) => (
             <span key={l} className="nav-link" style={{ fontSize: 12 }}>{l}</span>
@@ -644,7 +644,7 @@ function CreatorsPage({ onSignup }) {
         </h1>
         <div className="hero-divider" />
         <p className="hero-desc">
-          FilmLink is built exclusively for pre-union, emerging talent who need a real network — not just a job board.
+          Action is built exclusively for pre-union, emerging talent who need a real network — not just a job board.
         </p>
         <button className="btn-primary" onClick={() => onSignup("creator")}>
           Begin Your Application

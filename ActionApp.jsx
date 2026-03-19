@@ -411,7 +411,7 @@ function ApplicationFlow({ onSubmit }) {
       {step === 1 && (
         <div className="card">
           <div className="card-title">Create your account</div>
-          <div className="card-sub">Start your FilmLink creator application. No union card required.</div>
+          <div className="card-sub">Start your Action creator application. No union card required.</div>
           <div className="field-row">
             <div className="field"><label>First name</label><input placeholder="Maya" value={form.firstName} onChange={e => set("firstName", e.target.value)} /></div>
             <div className="field"><label>Last name</label><input placeholder="Osei" value={form.lastName} onChange={e => set("lastName", e.target.value)} /></div>
@@ -441,7 +441,7 @@ function ApplicationFlow({ onSubmit }) {
               : <div className="upload-text"><strong>Click to upload</strong> or drag & drop<br />JPG, PNG — up to 10 MB</div>
             }
           </div>
-          <div className="section-note">🔒 Files are uploaded directly to Cloudflare R2. Only you and FilmLink admins can access them.</div>
+          <div className="section-note">🔒 Files are uploaded directly to Cloudflare R2. Only you and Action admins can access them.</div>
           <div className="btn-row">
             <button className="btn" onClick={prev}>← Back</button>
             <button className="btn btn-primary" onClick={next}>Continue →</button>
@@ -453,7 +453,7 @@ function ApplicationFlow({ onSubmit }) {
       {step === 3 && (
         <div className="card">
           <div className="card-title">What's your primary role?</div>
-          <div className="card-sub">Choose how you'll primarily appear in the FilmLink network.</div>
+          <div className="card-sub">Choose how you'll primarily appear in the Action network.</div>
           <div className="prof-grid">
             {PROFESSIONS.map((p) => (
               <div
@@ -515,7 +515,7 @@ function ApplicationFlow({ onSubmit }) {
       {step === 5 && (
         <div className="card">
           <div className="card-title">Tell us about yourself</div>
-          <div className="card-sub">Your bio and credits will appear on your public FilmLink profile and are reviewed by our team.</div>
+          <div className="card-sub">Your bio and credits will appear on your public Action profile and are reviewed by our team.</div>
           <div className="field">
             <label>Bio</label>
             <textarea
@@ -572,7 +572,7 @@ function ApplicationFlow({ onSubmit }) {
             </div>
           )}
           <div style={{ fontSize: 12, color: "#9a9490", lineHeight: 1.7, marginBottom: 4, background: "#fdf9f7", border: "1px solid #f0ece6", borderRadius: 8, padding: "10px 13px" }}>
-            By submitting you agree to FilmLink's Terms of Service and Creator Guidelines. Applications are reviewed by our team within 48 hours. We may request additional materials.
+            By submitting you agree to Action's Terms of Service and Creator Guidelines. Applications are reviewed by our team within 48 hours. We may request additional materials.
           </div>
           <div className="btn-row">
             <button className="btn" onClick={prev}>← Edit</button>
@@ -750,7 +750,7 @@ function AdminDashboard({ toast }) {
               <div className="modal-title">{isApprove ? "Approve" : "Reject"} {app.name}?</div>
               <div className="modal-body">
                 {isApprove
-                  ? `${app.name} will receive a welcome email and gain full creator access to FilmLink, including project applications, mixers, and their public profile.`
+                  ? `${app.name} will receive a welcome email and gain full creator access to Action, including project applications, mixers, and their public profile.`
                   : `${app.name}'s application will be declined. They'll receive a notification and can reapply after 30 days.`}
               </div>
               <div className="modal-btns">

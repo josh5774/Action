@@ -26,7 +26,7 @@ app.use('/api/classes', require('./routes/classes'));
 app.get('/health', (_req, res) => {
   res.json({
     status: 'ok',
-    service: '@filmlink/backend',
+    service: '@action/backend',
     timestamp: new Date().toISOString(),
   });
 });
@@ -34,7 +34,7 @@ app.get('/health', (_req, res) => {
 app.get('/api/health', (_req, res) => {
   res.json({
     status: 'ok',
-    service: '@filmlink/backend',
+    service: '@action/backend',
     timestamp: new Date().toISOString(),
   });
 });
@@ -47,7 +47,7 @@ app.use((err, _req, res, _next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`FilmLink backend running on http://localhost:${PORT}`);
+  console.log(`Action backend running on http://localhost:${PORT}`);
 });
 
 module.exports = app;

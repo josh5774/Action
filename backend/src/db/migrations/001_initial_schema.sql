@@ -1,4 +1,4 @@
--- FilmLink Initial Schema
+-- Action Initial Schema
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 

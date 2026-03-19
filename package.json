@@ -1,5 +1,5 @@
 {
-  "name": "filmlink",
+  "name": "action",
   "private": true,
   "version": "0.2.0",
   "workspaces": [
@@ -9,8 +9,8 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "turbo run dev --parallel --filter=@filmlink/backend --filter=@filmlink/web",
-    "build": "turbo run build --filter=@filmlink/web",
+    "dev": "turbo run dev --parallel --filter=@action/backend --filter=@action/web",
+    "build": "turbo run build --filter=@action/web",
     "lint": "turbo run lint",
     "test": "turbo run test"
   },

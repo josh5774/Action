@@ -10,7 +10,7 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "paths": {
-      "@filmlink/shared": ["../packages/shared/src"]
+      "@action/shared": ["../packages/shared/src"]
     }
   },
   "include": ["src"],

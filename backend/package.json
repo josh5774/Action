@@ -1,5 +1,5 @@
 {
-  "name": "@filmlink/backend",
+  "name": "@action/backend",
   "version": "0.2.0",
   "private": true,
   "type": "commonjs",

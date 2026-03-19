@@ -1,11 +1,11 @@
-# FilmLink
+# Action
 
-FilmLink is a platform for emerging film creatives and film fans. The product vision is a two-sided ecosystem: a vetted creator network for actors, writers, directors, producers, cinematographers, editors, composers, and other collaborators, plus an open entertainment hub for articles, events, screenings, and discovery. The business materials describe it as a blend of casting marketplace, creative networking, education, events, and media for the next generation of filmmakers.
+Action is a platform for emerging film creatives and film fans. The product vision is a two-sided ecosystem: a vetted creator network for actors, writers, directors, producers, cinematographers, editors, composers, and other collaborators, plus an open entertainment hub for articles, events, screenings, and discovery. The business materials describe it as a blend of casting marketplace, creative networking, education, events, and media for the next generation of filmmakers.
 
 ## Product vision
 
 ### For creators
-FilmLink is intended to help emerging creatives:
+Action is intended to help emerging creatives:
 - find auditions and projects
 - meet collaborators
 - build professional profiles and reels
@@ -13,7 +13,7 @@ FilmLink is intended to help emerging creatives:
 - access acting classes and education
 
 ### For fans and industry followers
-FilmLink is also intended to support a public-facing audience that can:
+Action is also intended to support a public-facing audience that can:
 - read articles and entertainment coverage
 - follow creators
 - attend screenings and events
@@ -31,7 +31,7 @@ The attached planning documents consistently define these core product areas:
 
 ## Current repository state
 
-This repository is an in-progress monorepo/prototype and currently contains multiple parallel pieces of the FilmLink product:
+This repository is an in-progress monorepo/prototype and currently contains multiple parallel pieces of the Action product:
 
 - `backend/` — Express backend scaffold
 - `web/` — React web app scaffold
@@ -59,7 +59,7 @@ A few important notes about the repo as it exists today:
 │   └── shared/         # shared package
 ├── server/             # currently not the main active app entrypoint
 ├── web/                # React web app scaffold
-├── schema.prisma       # Prisma schema for FilmLink domain models
+├── schema.prisma       # Prisma schema for Action domain models
 ├── seed.ts             # development seed data
 ├── 001_init.sql        # SQL migration / initialization
 ├── turbo.json          # Turborepo task config
@@ -134,7 +134,7 @@ Later roadmap items include:
 - more community interaction and in-person growth
 
 ### Longer-term vision
-The long-term goal is for FilmLink to become a professional ecosystem and pipeline for emerging film talent, especially pre-union creatives who do not have a centralized network today.
+The long-term goal is for Action to become a professional ecosystem and pipeline for emerging film talent, especially pre-union creatives who do not have a centralized network today.
 
 ## Getting started
 
@@ -190,7 +190,7 @@ npm start
 At minimum, the database layer needs:
 
 ```env
-DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/filmlink?schema=public
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/action?schema=public
 ```
 
 ### Backend
@@ -198,7 +198,7 @@ DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/filmlink?schema=public
 
 ```env
 PORT=4000
-DATABASE_URL=postgresql://user:password@localhost:5432/filmlink
+DATABASE_URL=postgresql://user:password@localhost:5432/action
 JWT_SECRET=change_me_in_production
 JWT_EXPIRES_IN=7d
 ALLOWED_ORIGINS=http://localhost:3000
@@ -236,8 +236,8 @@ This repo has strong planning and a meaningful schema foundation, but it is not 
 
 This README is based on:
 - the current public repository structure and package files
-- the FilmLink pitch deck
-- the FilmLink business plan and technical requirements document
+- the Action pitch deck
+- the Action business plan and technical requirements document
 
 ## License
 
