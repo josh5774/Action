@@ -1,12 +1,930 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FilmLink</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ACTION — Film Network</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --blue: #185FA5;
+  --blue-dark: #0C447A;
+  --blue-light: #E6F1FB;
+  --blue-mid: #B5D4F4;
+  --film-black: #0D0D0D;
+  --film-off: #1A1A1A;
+  --film-gray: #2C2C2A;
+  --text-dim: rgba(255,255,255,0.5);
+  --text-muted: rgba(255,255,255,0.75);
+  --text-bright: #FFFFFF;
+  --accent: #185FA5;
+  --accent-glow: rgba(24, 95, 165, 0.35);
+  --border-subtle: rgba(255,255,255,0.08);
+  --border-mid: rgba(255,255,255,0.14);
+  --serif: 'DM Serif Display', Georgia, serif;
+  --sans: 'DM Sans', system-ui, sans-serif;
+  --transition: 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body {
+  font-family: var(--sans);
+  background: var(--film-black);
+  color: var(--text-bright);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  overflow-x: hidden;
+}
+
+/* ── PHONE SHELL ── */
+.shell {
+  width: 390px;
+  min-height: 100vh;
+  background: var(--film-black);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── FILM GRAIN OVERLAY ── */
+.shell::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  width: 390px;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  pointer-events: none;
+  z-index: 999;
+  opacity: 0.6;
+}
+
+/* ── SCREENS ── */
+.screen { display: none; flex-direction: column; flex: 1; }
+.screen.active { display: flex; }
+
+/* ══════════════════════════════════
+   LANDING SCREEN
+══════════════════════════════════ */
+#screen-landing {
+  position: relative;
+}
+
+.landing-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 280px 340px at 50% 38%, rgba(24,95,165,0.18) 0%, transparent 70%),
+    linear-gradient(180deg, #0A0A0A 0%, #0D0D0D 100%);
+  z-index: 0;
+}
+
+/* Film strip decorative bars */
+.film-strip-top,
+.film-strip-bottom {
+  position: absolute;
+  left: 0; right: 0;
+  height: 28px;
+  background: var(--film-off);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  gap: 0;
+  z-index: 2;
+  overflow: hidden;
+}
+.film-strip-top { top: 0; border-bottom: 1px solid var(--border-subtle); }
+.film-strip-bottom { bottom: 0; border-top: 1px solid var(--border-subtle); }
+
+.film-hole {
+  width: 16px;
+  height: 12px;
+  border-radius: 2px;
+  border: 1.5px solid rgba(255,255,255,0.12);
+  flex-shrink: 0;
+  margin: 0 6px;
+}
+
+.landing-content {
+  position: relative;
+  z-index: 3;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 32px 80px;
+  gap: 0;
+}
+
+.landing-eyebrow {
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--blue);
+  margin-bottom: 20px;
+  opacity: 0;
+  animation: fadeUp 0.6s 0.2s forwards;
+}
+
+.landing-wordmark {
+  font-family: var(--serif);
+  font-size: 72px;
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+  color: var(--text-bright);
+  text-align: center;
+  margin-bottom: 8px;
+  opacity: 0;
+  animation: fadeUp 0.7s 0.35s forwards;
+}
+
+.landing-wordmark em {
+  font-style: italic;
+  color: var(--blue);
+}
+
+.landing-tagline {
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.7;
+  max-width: 260px;
+  margin-bottom: 48px;
+  opacity: 0;
+  animation: fadeUp 0.7s 0.5s forwards;
+}
+
+/* Scene preview strip */
+.scene-strip {
+  width: 100%;
+  height: 120px;
+  border-radius: 10px;
+  border: 1px solid var(--border-mid);
+  overflow: hidden;
+  position: relative;
+  margin-bottom: 48px;
+  opacity: 0;
+  animation: fadeUp 0.7s 0.65s forwards;
+  background: var(--film-off);
+}
+
+.scene-strip-inner {
+  display: flex;
+  height: 100%;
+  animation: scrollScene 20s linear infinite;
+  width: max-content;
+}
+
+.scene-card {
+  width: 110px;
+  height: 120px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-right: 1px solid var(--border-subtle);
+  padding: 12px;
+}
+
+.scene-av {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: white;
+  flex-shrink: 0;
+}
+
+.scene-name {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-bright);
+  text-align: center;
+  line-height: 1.3;
+}
+
+.scene-role {
+  font-size: 10px;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.scene-strip-fade-l,
+.scene-strip-fade-r {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 40px;
+  z-index: 2;
+  pointer-events: none;
+}
+.scene-strip-fade-l { left: 0; background: linear-gradient(to right, var(--film-off), transparent); }
+.scene-strip-fade-r { right: 0; background: linear-gradient(to left, var(--film-off), transparent); }
+
+.landing-cta-group {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  opacity: 0;
+  animation: fadeUp 0.7s 0.8s forwards;
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 15px 24px;
+  background: var(--blue);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--transition), transform var(--transition);
+  letter-spacing: 0.01em;
+}
+.btn-primary:hover { background: var(--blue-dark); }
+.btn-primary:active { transform: scale(0.98); }
+
+.btn-ghost {
+  width: 100%;
+  padding: 14px 24px;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border-mid);
+  border-radius: 12px;
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: border-color var(--transition), color var(--transition), transform var(--transition);
+}
+.btn-ghost:hover { border-color: rgba(255,255,255,0.28); color: white; }
+.btn-ghost:active { transform: scale(0.98); }
+
+.landing-legal {
+  margin-top: 20px;
+  font-size: 11px;
+  color: var(--text-dim);
+  text-align: center;
+  line-height: 1.6;
+  opacity: 0;
+  animation: fadeUp 0.7s 0.95s forwards;
+}
+
+.landing-legal a {
+  color: var(--blue);
+  text-decoration: none;
+}
+
+/* ══════════════════════════════════
+   LOGIN SCREEN
+══════════════════════════════════ */
+#screen-login {
+  background: var(--film-black);
+}
+
+.auth-header {
+  padding: 18px 20px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.back-btn-round {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border-mid);
+  background: none;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: border-color var(--transition), color var(--transition);
+}
+.back-btn-round:hover { border-color: rgba(255,255,255,0.3); color: white; }
+
+.auth-screen-label {
+  font-size: 12px;
+  color: var(--text-dim);
+  font-weight: 400;
+}
+
+.auth-body {
+  flex: 1;
+  padding: 40px 28px 32px;
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-logo {
+  font-family: var(--serif);
+  font-size: 36px;
+  color: var(--text-bright);
+  margin-bottom: 6px;
+  letter-spacing: -0.02em;
+}
+
+.auth-logo em { font-style: italic; color: var(--blue); }
+
+.auth-subtitle {
+  font-size: 14px;
+  color: var(--text-dim);
+  font-weight: 300;
+  margin-bottom: 36px;
+  line-height: 1.5;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.field-input {
+  background: var(--film-off);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-family: var(--sans);
+  font-size: 15px;
+  color: var(--text-bright);
+  outline: none;
+  transition: border-color var(--transition);
+  width: 100%;
+}
+
+.field-input::placeholder { color: var(--text-dim); }
+.field-input:focus { border-color: var(--blue); }
+
+.field-input-wrap {
+  position: relative;
+}
+
+.pw-toggle {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 4px;
+  font-size: 13px;
+}
+
+.forgot-link {
+  text-align: right;
+  font-size: 12px;
+  color: var(--blue);
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: var(--sans);
+}
+.forgot-link:hover { text-decoration: underline; }
+
+.auth-error {
+  font-size: 13px;
+  color: #F09595;
+  background: rgba(240, 149, 149, 0.1);
+  border: 1px solid rgba(240,149,149,0.2);
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: none;
+}
+
+.auth-error.visible { display: block; }
+
+.auth-hint {
+  font-size: 12px;
+  color: var(--text-dim);
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-subtle);
+}
+
+.auth-divider span {
+  font-size: 12px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.btn-social {
+  width: 100%;
+  padding: 13px 24px;
+  background: var(--film-off);
+  color: var(--text-muted);
+  border: 1px solid var(--border-mid);
+  border-radius: 10px;
+  font-family: var(--sans);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: border-color var(--transition), color var(--transition);
+}
+.btn-social:hover { border-color: rgba(255,255,255,0.25); color: white; }
+
+.auth-footer {
+  margin-top: auto;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-dim);
+  padding-top: 16px;
+}
+
+.auth-footer a {
+  color: var(--blue);
+  cursor: pointer;
+  text-decoration: none;
+}
+.auth-footer a:hover { text-decoration: underline; }
+
+/* ══════════════════════════════════
+   SIGNUP SCREEN
+══════════════════════════════════ */
+#screen-signup { background: var(--film-black); }
+
+/* user type selector */
+.type-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.type-card {
+  background: var(--film-off);
+  border: 1.5px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 16px 12px;
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.type-card:hover { border-color: var(--border-mid); }
+.type-card.selected { border-color: var(--blue); background: rgba(24,95,165,0.1); }
+
+.type-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2px;
+}
+
+.type-icon.creator { background: rgba(24,95,165,0.2); }
+.type-icon.fan { background: rgba(24,95,165,0.1); }
+
+.type-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-bright);
+}
+
+.type-desc {
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.4;
+}
+
+.selected-badge {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--blue);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  margin-top: -6px;
+  margin-right: -6px;
+  align-self: flex-end;
+}
+.type-card.selected .selected-badge { display: flex; }
+
+/* ══════════════════════════════════
+   LOADING / TRANSITION SCREEN
+══════════════════════════════════ */
+#screen-loading {
+  align-items: center;
+  justify-content: center;
+  background: var(--film-black);
+}
+
+.loading-logo {
+  font-family: var(--serif);
+  font-size: 52px;
+  color: var(--text-bright);
+  letter-spacing: -0.02em;
+  animation: pulseLogo 1.4s ease-in-out infinite;
+}
+
+.loading-logo em { font-style: italic; color: var(--blue); }
+
+.loading-bar-wrap {
+  width: 120px;
+  height: 2px;
+  background: var(--border-subtle);
+  border-radius: 2px;
+  margin-top: 24px;
+  overflow: hidden;
+}
+
+.loading-bar {
+  height: 100%;
+  width: 0%;
+  background: var(--blue);
+  border-radius: 2px;
+  transition: width 0.1s linear;
+}
+
+/* ══════════════════════════════════
+   ANIMATIONS
+══════════════════════════════════ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseLogo {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+@keyframes scrollScene {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ══════════════════════════════════
+   RESPONSIVE (non-mobile screens)
+══════════════════════════════════ */
+@media (min-width: 500px) {
+  body { background: #111; align-items: center; justify-content: center; min-height: 100vh; }
+  .shell {
+    min-height: 820px;
+    height: 820px;
+    border-radius: 44px;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 40px 100px rgba(0,0,0,0.7);
+    overflow: hidden;
+  }
+  .shell::before { border-radius: 44px; }
+  .screen { overflow-y: auto; }
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ════ LANDING ════ -->
+  <div id="screen-landing" class="screen active">
+    <div class="landing-bg"></div>
+
+    <!-- top film strip -->
+    <div class="film-strip-top" id="film-top"></div>
+
+    <div class="landing-content">
+      <div class="landing-eyebrow">Film Network · Est. 2025</div>
+
+      <div class="landing-wordmark">
+        <em>action</em>
+      </div>
+
+      <p class="landing-tagline">
+        The private network for emerging film creatives — and the fans who follow them.
+      </p>
+
+      <!-- scrolling member strip -->
+      <div class="scene-strip">
+        <div class="scene-strip-fade-l"></div>
+        <div class="scene-strip-inner" id="scene-inner"></div>
+        <div class="scene-strip-fade-r"></div>
+      </div>
+
+      <div class="landing-cta-group">
+        <button class="btn-primary" onclick="goTo('signup')">Join the Network</button>
+        <button class="btn-ghost" onclick="goTo('login')">Sign in</button>
+      </div>
+
+      <p class="landing-legal">
+        By joining, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+      </p>
+    </div>
+
+    <!-- bottom film strip -->
+    <div class="film-strip-bottom" id="film-bottom"></div>
+  </div>
+
+  <!-- ════ LOGIN ════ -->
+  <div id="screen-login" class="screen">
+    <div class="auth-header">
+      <button class="back-btn-round" onclick="goTo('landing')">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6">
+          <path d="M9 2L4 7l5 5"/>
+        </svg>
+      </button>
+      <span class="auth-screen-label">Sign in</span>
+      <div style="width:36px;"></div>
+    </div>
+
+    <div class="auth-body">
+      <div class="auth-logo"><em>action</em></div>
+      <p class="auth-subtitle">Welcome back. Your network is waiting.</p>
+
+      <div class="auth-form">
+        <div class="field-group">
+          <label class="field-label">Email</label>
+          <input class="field-input" type="email" id="login-email" placeholder="you@email.com" autocomplete="email"/>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Password</label>
+          <div class="field-input-wrap">
+            <input class="field-input" type="password" id="login-pw" placeholder="Your password" autocomplete="current-password" style="padding-right: 48px;"/>
+            <button class="pw-toggle" onclick="togglePw('login-pw', this)" type="button" aria-label="Toggle password">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" id="eye-icon-login"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <button class="forgot-link" type="button">Forgot password?</button>
+
+        <div class="auth-error" id="login-error">
+          Incorrect email or password. Please try again.
+        </div>
+      </div>
+
+      <div class="auth-hint">Demo: any email + password works</div>
+      <button class="btn-primary" onclick="attemptLogin()" style="margin-bottom: 16px;">Sign in</button>
+
+      <div class="auth-divider"><span>or continue with</span></div>
+
+      <button class="btn-social" onclick="goTo('loading')">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M15.5 8.18c0-.57-.05-1.12-.14-1.64H8v3.1h4.2a3.6 3.6 0 01-1.56 2.36v1.96h2.52c1.47-1.36 2.34-3.35 2.34-5.78z" fill="#4285F4"/>
+          <path d="M8 16c2.1 0 3.87-.7 5.16-1.88l-2.52-1.96c-.7.47-1.6.74-2.64.74-2.03 0-3.75-1.37-4.36-3.22H1.04v2.02A8 8 0 008 16z" fill="#34A853"/>
+          <path d="M3.64 9.68a4.8 4.8 0 010-3.36V4.3H1.04a8 8 0 000 7.4l2.6-2.02z" fill="#FBBC05"/>
+          <path d="M8 3.18c1.14 0 2.17.39 2.97 1.16l2.23-2.23A8 8 0 001.04 4.3l2.6 2.02C4.25 4.55 5.97 3.18 8 3.18z" fill="#EA4335"/>
+        </svg>
+        Continue with Google
+      </button>
+
+      <div class="auth-footer">
+        New to ACTION? <a onclick="goTo('signup')">Create an account</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ SIGNUP ════ -->
+  <div id="screen-signup" class="screen">
+    <div class="auth-header">
+      <button class="back-btn-round" onclick="goTo('landing')">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6">
+          <path d="M9 2L4 7l5 5"/>
+        </svg>
+      </button>
+      <span class="auth-screen-label">Create account</span>
+      <div style="width:36px;"></div>
+    </div>
+
+    <div class="auth-body">
+      <div class="auth-logo"><em>action</em></div>
+      <p class="auth-subtitle">Choose how you want to join.</p>
+
+      <div class="type-cards">
+        <div class="type-card selected" id="type-creator" onclick="selectType('creator')">
+          <div class="selected-badge">
+            <svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="white" stroke-width="1.5"><path d="M1 4l2 2 4-4"/></svg>
+          </div>
+          <div class="type-icon creator">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#378ADD" stroke-width="1.4"><circle cx="9" cy="6" r="3"/><rect x="1" y="2" width="16" height="12" rx="1.5"/><path d="M7 9l4 2-4 2V9z"/></svg>
+          </div>
+          <div class="type-name">Creative</div>
+          <div class="type-desc">Actor, writer, director, crew</div>
+        </div>
+
+        <div class="type-card" id="type-fan" onclick="selectType('fan')">
+          <div class="selected-badge">
+            <svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="white" stroke-width="1.5"><path d="M1 4l2 2 4-4"/></svg>
+          </div>
+          <div class="type-icon fan">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#378ADD" stroke-width="1.4"><path d="M9 2l1.8 4.6L16 7l-3.5 3.4.8 5L9 13l-4.3 2.4.8-5L2 7l5.2-.4L9 2z"/></svg>
+          </div>
+          <div class="type-name">Film Fan</div>
+          <div class="type-desc">Follow, read, attend events</div>
+        </div>
+      </div>
+
+      <div id="creator-note" style="background:rgba(24,95,165,0.1);border:1px solid rgba(24,95,165,0.25);border-radius:10px;padding:12px 14px;margin-bottom:20px;font-size:12px;color:rgba(255,255,255,0.65);line-height:1.6;">
+        ✦ Creator accounts require admin approval after signup. We review your profile within 48 hours.
+      </div>
+
+      <div class="auth-form">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="field-group">
+            <label class="field-label">First name</label>
+            <input class="field-input" type="text" placeholder="Jordan" autocomplete="given-name"/>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Last name</label>
+            <input class="field-input" type="text" placeholder="Rivera" autocomplete="family-name"/>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Email</label>
+          <input class="field-input" type="email" placeholder="you@email.com" autocomplete="email"/>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Password</label>
+          <div class="field-input-wrap">
+            <input class="field-input" type="password" id="signup-pw" placeholder="Create a password" autocomplete="new-password" style="padding-right:48px;"/>
+            <button class="pw-toggle" onclick="togglePw('signup-pw', this)" type="button" aria-label="Toggle password">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="goTo('loading')" style="margin-bottom:14px;">
+        Create Account
+      </button>
+
+      <div class="auth-divider"><span>or</span></div>
+
+      <button class="btn-social" onclick="goTo('loading')" style="margin-bottom:20px;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M15.5 8.18c0-.57-.05-1.12-.14-1.64H8v3.1h4.2a3.6 3.6 0 01-1.56 2.36v1.96h2.52c1.47-1.36 2.34-3.35 2.34-5.78z" fill="#4285F4"/>
+          <path d="M8 16c2.1 0 3.87-.7 5.16-1.88l-2.52-1.96c-.7.47-1.6.74-2.64.74-2.03 0-3.75-1.37-4.36-3.22H1.04v2.02A8 8 0 008 16z" fill="#34A853"/>
+          <path d="M3.64 9.68a4.8 4.8 0 010-3.36V4.3H1.04a8 8 0 000 7.4l2.6-2.02z" fill="#FBBC05"/>
+          <path d="M8 3.18c1.14 0 2.17.39 2.97 1.16l2.23-2.23A8 8 0 001.04 4.3l2.6 2.02C4.25 4.55 5.97 3.18 8 3.18z" fill="#EA4335"/>
+        </svg>
+        Continue with Google
+      </button>
+
+      <div class="auth-footer">
+        Already a member? <a onclick="goTo('login')">Sign in</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ LOADING ════ -->
+  <div id="screen-loading" class="screen">
+    <div class="loading-logo"><em>action</em></div>
+    <div class="loading-bar-wrap">
+      <div class="loading-bar" id="loading-bar"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const members = [
+  { init:'MK', name:'Maya Kim', role:'DP · LA', bg:'#D85A30' },
+  { init:'AP', name:'Alex Patel', role:'Producer · NY', bg:'#0F6E56' },
+  { init:'SL', name:'Sofia Lenz', role:'Writer · Berlin', bg:'#534AB7' },
+  { init:'JR', name:'Jordan R.', role:'Director · NY', bg:'#185FA5' },
+  { init:'TW', name:'Terri Walsh', role:'Actor · Atlanta', bg:'#854F0B' },
+  { init:'CN', name:'Clara Ng', role:'Editor · SF', bg:'#993556' },
+  { init:'DM', name:'Dev Mehta', role:'Composer · LA', bg:'#0F6E56' },
+  { init:'RL', name:'Rosa Lima', role:'Cinematog. · Miami', bg:'#185FA5' },
+];
+
+function buildStrip() {
+  const inner = document.getElementById('scene-inner');
+  const doubled = [...members, ...members];
+  inner.innerHTML = doubled.map(m => `
+    <div class="scene-card">
+      <div class="scene-av" style="background:${m.bg}">${m.init}</div>
+      <div class="scene-name">${m.name}</div>
+      <div class="scene-role">${m.role}</div>
+    </div>
+  `).join('');
+}
+
+function buildFilmStrips() {
+  ['film-top','film-bottom'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    for (let i = 0; i < 20; i++) {
+      const hole = document.createElement('div');
+      hole.className = 'film-hole';
+      el.appendChild(hole);
+    }
+  });
+}
+
+function goTo(screen) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + screen).classList.add('active');
+  if (screen === 'loading') startLoading();
+}
+
+function attemptLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pw = document.getElementById('login-pw').value;
+  const err = document.getElementById('login-error');
+
+  if (!email || !pw) {
+    err.classList.add('visible');
+    err.textContent = 'Please enter your email and password.';
+    return;
+  }
+  err.classList.remove('visible');
+  goTo('loading');
+}
+
+function startLoading() {
+  const bar = document.getElementById('loading-bar');
+  let w = 0;
+  bar.style.width = '0%';
+  const iv = setInterval(() => {
+    w += Math.random() * 14 + 6;
+    if (w >= 100) {
+      w = 100;
+      bar.style.width = '100%';
+      clearInterval(iv);
+      setTimeout(() => {
+        window.location.href = 'Action_Front_Page.html';
+      }, 300);
+    } else {
+      bar.style.width = w + '%';
+    }
+  }, 120);
+}
+
+function selectType(type) {
+  document.getElementById('type-creator').classList.toggle('selected', type === 'creator');
+  document.getElementById('type-fan').classList.toggle('selected', type === 'fan');
+  const note = document.getElementById('creator-note');
+  note.style.display = type === 'creator' ? 'block' : 'none';
+}
+
+function togglePw(inputId, btn) {
+  const input = document.getElementById(inputId);
+  const isHidden = input.type === 'password';
+  input.type = isHidden ? 'text' : 'password';
+  btn.querySelector('svg').style.opacity = isHidden ? '1' : '0.4';
+}
+
+buildStrip();
+buildFilmStrips();
+</script>
+</body>
 </html>
